@@ -17,16 +17,38 @@ function App() {
     },
   ]);
   const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [conversationId, setConversationId] = useState(null);
 
-  function sendMessage(text = input) {
+  async function sendMessage(text = input) {
     const value = text.trim();
-    if (!value) return;
-    setMessages((current) => [
-      ...current,
-      { role: 'user', text: value },
-      { role: 'assistant', text: 'Thanks. I received your question. The AI knowledge connection will be enabled in the next step.' },
-    ]);
+    if (!value || loading) return;
+
+    setMessages((current) => [...current, { role: 'user', text: value }]);
     setInput('');
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: value, conversationId }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Request failed');
+
+      setConversationId(data.conversationId || conversationId);
+      setMessages((current) => [...current, { role: 'assistant', text: data.answer }]);
+    } catch (error) {
+      setMessages((current) => [
+        ...current,
+        { role: 'assistant', text: 'I’m unable to connect to the support service right now. Please try again shortly.' },
+      ]);
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -56,11 +78,17 @@ function App() {
                 <div className="bubble">{message.text}</div>
               </div>
             ))}
+            {loading && (
+              <div className="message-row assistant">
+                <div className="avatar"><Bot size={17} /></div>
+                <div className="bubble typing">Thinking...</div>
+              </div>
+            )}
           </div>
 
           <div className="suggestions">
             {suggestions.map((item) => (
-              <button key={item} onClick={() => sendMessage(item)}>{item}</button>
+              <button key={item} onClick={() => sendMessage(item)} disabled={loading}>{item}</button>
             ))}
           </div>
         </div>
@@ -72,8 +100,9 @@ function App() {
             onKeyDown={(event) => event.key === 'Enter' && sendMessage()}
             placeholder="Type your question..."
             aria-label="Type your question"
+            disabled={loading}
           />
-          <button className="send-button" onClick={() => sendMessage()} aria-label="Send message"><Send size={19} /></button>
+          <button className="send-button" onClick={() => sendMessage()} disabled={loading} aria-label="Send message"><Send size={19} /></button>
         </footer>
         <div className="footer-note">Powered by AI • Your conversation is handled securely</div>
       </section>
