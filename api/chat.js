@@ -1,14 +1,18 @@
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const ai = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: 'https://api.groq.com/openai/v1',
+});
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 const BUSINESS_SLUG = process.env.BUSINESS_SLUG || 'aichatbot-test-business';
-const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
+const MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 
 function json(res, status, body) {
   res.status(status).setHeader('Content-Type', 'application/json');
@@ -18,7 +22,7 @@ function json(res, status, body) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed.' });
 
-  if (!process.env.OPENAI_API_KEY || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!process.env.GROQ_API_KEY || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return json(res, 500, { error: 'Server configuration is incomplete.' });
   }
 
@@ -76,11 +80,12 @@ export default async function handler(req, res) {
       conversation = created.data;
     }
 
-    await supabase.from('messages').insert({
+    const userInsert = await supabase.from('messages').insert({
       conversation_id: conversation.id,
       role: 'user',
       content: userMessage
     });
+    if (userInsert.error) return json(res, 500, { error: 'Could not save the customer message.' });
 
     const prompt = `You are the customer support assistant for ${business.name}.
 Answer using only the business knowledge below. Do not invent prices, services, policies, opening hours, contact details, or availability.
@@ -93,18 +98,19 @@ ${JSON.stringify(knowledge, null, 2)}
 CUSTOMER QUESTION:
 ${userMessage}`;
 
-    const response = await openai.responses.create({
+    const response = await ai.responses.create({
       model: MODEL,
-      input: prompt
+      input: prompt,
     });
 
     const answer = response.output_text?.trim() || 'I could not generate a response right now. Please contact the business directly.';
 
-    await supabase.from('messages').insert({
+    const assistantInsert = await supabase.from('messages').insert({
       conversation_id: conversation.id,
       role: 'assistant',
       content: answer
     });
+    if (assistantInsert.error) console.error('Assistant message save error:', assistantInsert.error);
 
     return json(res, 200, { answer, conversationId: conversation.id });
   } catch (error) {
