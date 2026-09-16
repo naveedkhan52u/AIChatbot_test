@@ -3,6 +3,9 @@ import { getSupabase } from './lib/supabase';
 import { Bot, BriefcaseBusiness, CircleUserRound, FileText, HelpCircle, LogOut, MessageSquare, Settings, Upload, Wrench, BookOpen } from 'lucide-react';
 import mammoth from 'mammoth/mammoth.browser';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import pdfWorker from 'pdfjs-dist/legacy/build/pdf.worker.mjs?url';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 const emptyBusiness = { name: '', description: '', phone: '', email: '', website: '', address: '', city: '' };
 const emptyKnowledge = { opening_hours: '', booking_policy: '', cancellation_policy: '', payment_methods: '', support_policy: '' };
