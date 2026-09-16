@@ -17,7 +17,7 @@
   var frame = document.createElement('iframe');
   frame.title = 'AI Customer Support Chat';
   frame.setAttribute('aria-hidden', 'true');
-  frame.style.cssText = 'position:fixed;right:22px;bottom:92px;width:390px;height:650px;border:0;border-radius:24px;background:transparent;box-shadow:0 20px 60px rgba(0,0,0,.18);z-index:2147483645;display:none;overflow:hidden;';
+  frame.style.cssText = 'position:fixed;right:22px;bottom:92px;width:390px;height:500px;border:0;border-radius:24px;background:transparent;box-shadow:0 20px 60px rgba(0,0,0,.18);z-index:2147483645;display:none;overflow:hidden;';
 
   var params = new URLSearchParams();
   params.set('embed', '1');
@@ -42,7 +42,7 @@
       frame.style.left = '10px';
       frame.style.bottom = '82px';
       frame.style.width = 'calc(100vw - 20px)';
-      frame.style.height = 'min(650px, calc(100vh - 100px))';
+      frame.style.height = 'min(500px, calc(100vh - 100px))';
       button.style.right = '14px';
       button.style.bottom = '14px';
     } else {
@@ -50,7 +50,7 @@
       frame.style.left = 'auto';
       frame.style.bottom = '92px';
       frame.style.width = '390px';
-      frame.style.height = '650px';
+      frame.style.height = '500px';
       button.style.right = '22px';
       button.style.bottom = '22px';
     }
