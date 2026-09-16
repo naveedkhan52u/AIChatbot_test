@@ -20,6 +20,7 @@
   var frame = document.createElement('iframe');
   frame.title = 'AI Customer Support Chat';
   frame.setAttribute('aria-hidden', 'true');
+  frame.setAttribute('allow', 'microphone');
   frame.style.cssText = 'position:fixed;right:22px;bottom:86px;width:370px;height:430px;border:0;border-radius:20px;background:transparent;box-shadow:0 20px 60px rgba(0,0,0,.18);z-index:2147483645;display:none;overflow:hidden;';
 
   var params = new URLSearchParams();
