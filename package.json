@@ -11,9 +11,9 @@
   "dependencies": {
     "@supabase/supabase-js": "latest",
     "lucide-react": "latest",
-    "openai": "latest",
-    "pdf-parse": "latest",
     "mammoth": "latest",
+    "openai": "latest",
+    "pdfjs-dist": "latest",
     "react": "latest",
     "react-dom": "latest"
   },
