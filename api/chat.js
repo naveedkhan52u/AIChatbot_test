@@ -15,19 +15,22 @@ export default async function handler(req, res) {
   if (!process.env.GROQ_API_KEY || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return json(res, 500, { error: 'Server configuration is incomplete.' });
 
   try {
-    const { message, conversationId } = req.body || {};
+    const { message, conversationId, businessId, businessSlug } = req.body || {};
     const userMessage = typeof message === 'string' ? message.trim() : '';
     if (!userMessage) return json(res, 400, { error: 'Message is required.' });
     if (userMessage.length > 2000) return json(res, 400, { error: 'Message is too long.' });
 
-    const { data: business, error: businessError } = await supabase.from('businesses').select('id,name,description,phone,email,website,address,city').eq('slug', BUSINESS_SLUG).eq('status', 'active').single();
+    let businessQuery = supabase.from('businesses').select('id,name,description,phone,email,website,address,city').eq('status', 'active');
+    if (typeof businessId === 'string' && businessId.trim()) businessQuery = businessQuery.eq('id', businessId.trim());
+    else businessQuery = businessQuery.eq('slug', typeof businessSlug === 'string' && businessSlug.trim() ? businessSlug.trim() : BUSINESS_SLUG);
+    const { data: business, error: businessError } = await businessQuery.single();
     if (businessError || !business) return json(res, 404, { error: 'Business knowledge is not configured yet.' });
 
     const [infoResult, servicesResult, faqsResult, documentsResult] = await Promise.all([
       supabase.from('business_info').select('key,value').eq('business_id', business.id),
       supabase.from('services').select('name,description,price,currency,availability').eq('business_id', business.id).eq('status', 'active'),
       supabase.from('faqs').select('question,answer,category').eq('business_id', business.id).eq('status', 'active'),
-      supabase.from('knowledge_documents').select('title,file_name,file_type,extracted_text,status').eq('business_id', business.id).eq('status', 'ready').order('created_at', { ascending: false }).limit(20)
+      supabase.from('knowledge_documents').select('title,file_name,file_type,extracted_text,status').eq('business_id', business.id).in('status', ['ready', 'processed', 'extracted']).order('created_at', { ascending: false }).limit(20)
     ]);
     if (infoResult.error || servicesResult.error || faqsResult.error || documentsResult.error) return json(res, 500, { error: 'Could not load business knowledge.' });
 
