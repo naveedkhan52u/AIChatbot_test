@@ -6,7 +6,10 @@ import './styles.css';
 
 const suggestions = ['What services do you provide?', 'What are your opening hours?', 'How can I make a booking?'];
 
-function ChatbotApp() {
+function ChatbotApp({ embedded = false }) {
+  const params = new URLSearchParams(window.location.search);
+  const businessId = params.get('businessId');
+  const businessSlug = params.get('businessSlug');
   const [messages, setMessages] = useState([{ role: 'assistant', text: 'Hello! I’m your AI customer support assistant. Ask me about our services, prices, opening hours, or bookings.' }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,7 +21,7 @@ function ChatbotApp() {
     setMessages(current => [...current, { role: 'user', text: value }]);
     setInput(''); setLoading(true);
     try {
-      const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: value, conversationId }) });
+      const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: value, conversationId, businessId, businessSlug }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Request failed');
       setConversationId(data.conversationId || conversationId);
@@ -29,8 +32,8 @@ function ChatbotApp() {
     } finally { setLoading(false); }
   }
 
-  return <main className="app-shell"><section className="chat-card">
-    <header className="chat-header"><div className="brand-icon"><Bot size={24} /></div><div><h1>AI Customer Support</h1><p><span className="status-dot" /> Online assistant</p></div><button className="admin-link" onClick={() => { window.location.href = '/admin'; }}>Admin</button></header>
+  return <main className={`app-shell${embedded ? ' embedded-shell' : ''}`}><section className="chat-card">
+    <header className="chat-header"><div className="brand-icon"><Bot size={24} /></div><div><h1>AI Customer Support</h1><p><span className="status-dot" /> Online assistant</p></div>{!embedded && <button className="admin-link" onClick={() => { window.location.href = '/admin'; }}>Admin</button>}</header>
     <div className="chat-body"><div className="welcome"><div className="welcome-icon"><Sparkles size={22} /></div><div><h2>How can I help?</h2><p>Ask a question or choose one of the common questions below.</p></div></div>
       <div className="messages">{messages.map((message, index) => <div key={index} className={`message-row ${message.role}`}><div className="avatar">{message.role === 'assistant' ? <Bot size={17} /> : <UserRound size={17} />}</div><div className="bubble">{message.text}</div></div>)}{loading && <div className="message-row assistant"><div className="avatar"><Bot size={17} /></div><div className="bubble typing">Thinking...</div></div>}</div>
       <div className="suggestions">{suggestions.map(item => <button key={item} onClick={() => sendMessage(item)} disabled={loading}>{item}</button>)}</div>
@@ -41,7 +44,9 @@ function ChatbotApp() {
 }
 
 function RootApp() {
-  return window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/') ? <AdminApp /> : <ChatbotApp />;
+  const embedded = new URLSearchParams(window.location.search).get('embed') === '1';
+  if (window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/')) return <AdminApp />;
+  return <ChatbotApp embedded={embedded} />;
 }
 
 createRoot(document.getElementById('root')).render(<RootApp />);
