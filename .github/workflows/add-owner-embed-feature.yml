@@ -1,0 +1,122 @@
+name: Add owner embed chatbot feature
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Patch admin dashboard
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('src/AdminApp.jsx')
+          s = p.read_text()
+
+          old = "import { Bot, BriefcaseBusiness, CircleUserRound, FileText, HelpCircle, LogOut, MessageSquare, Settings, Upload, Wrench, BookOpen, Plus, ShieldCheck } from 'lucide-react';"
+          new = "import { Bot, BriefcaseBusiness, CircleUserRound, FileText, HelpCircle, LogOut, MessageSquare, Settings, Upload, Wrench, BookOpen, Plus, ShieldCheck, Code2, Copy, Check } from 'lucide-react';"
+          if old in s and 'Code2, Copy, Check' not in s:
+              s = s.replace(old, new, 1)
+
+          marker = "function DataSection({ title, table, fields, businessId }) {"
+          component = r'''
+function EmbedChatbot({ businessId }) {
+  const [copied, setCopied] = useState(false);
+  const embedCode = businessId
+    ? `<script src="${window.location.origin}/chatbot.js" data-business-id="${businessId}" defer></script>`
+    : '';
+  async function copyCode() {
+    if (!embedCode) return;
+    try {
+      await navigator.clipboard.writeText(embedCode);
+    } catch {
+      const area = document.createElement('textarea');
+      area.value = embedCode;
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.focus();
+      area.select();
+      document.execCommand('copy');
+      area.remove();
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  }
+  return <div className="panel embed-panel">
+    <div className="section-heading">
+      <div><h2><Code2 size={19} /> Embed Chatbot</h2><p className="muted">Add your business chatbot to any website. This code is unique to your business.</p></div>
+    </div>
+    <div className="embed-info"><strong>Your Business ID</strong><code>{businessId || 'Loading...'}</code></div>
+    <label className="embed-code-label"><span>Website embed code</span><textarea className="embed-code" readOnly value={embedCode} rows="4" /></label>
+    <div className="embed-actions"><button className="primary-btn" type="button" onClick={copyCode} disabled={!embedCode}>{copied ? <><Check size={16} /> Copied</> : <><Copy size={16} /> Copy Embed Code</>}</button></div>
+    <p className="muted embed-help">Paste this single script into your website where you want the chatbot to load. Do not share your Supabase keys or admin credentials.</p>
+  </div>;
+}
+
+'''
+          if 'function EmbedChatbot({ businessId })' not in s:
+              if marker not in s:
+                  raise SystemExit('DataSection marker not found')
+              s = s.replace(marker, component + marker, 1)
+
+          old_nav = "const nav = [['overview', <BriefcaseBusiness size={17} />, 'Overview'], ['business', <Settings size={17} />, 'Business Profile'], ['knowledge', <BookOpen size={17} />, 'Knowledge Base'], ['services', <Wrench size={17} />, 'Services'], ['faqs', <HelpCircle size={17} />, 'FAQs'], ['conversations', <MessageSquare size={17} />, 'Conversations'], ['leads', <CircleUserRound size={17} />, 'Leads'], ['account-settings', <ShieldCheck size={17} />, 'Account Settings']];"
+          new_nav = "const nav = [['overview', <BriefcaseBusiness size={17} />, 'Overview'], ['business', <Settings size={17} />, 'Business Profile'], ['knowledge', <BookOpen size={17} />, 'Knowledge Base'], ['services', <Wrench size={17} />, 'Services'], ['faqs', <HelpCircle size={17} />, 'FAQs'], ['conversations', <MessageSquare size={17} />, 'Conversations'], ['leads', <CircleUserRound size={17} />, 'Leads'], ['embed', <Code2 size={17} />, 'Embed Chatbot'], ['account-settings', <ShieldCheck size={17} />, 'Account Settings']];"
+          if old_nav in s:
+              s = s.replace(old_nav, new_nav, 1)
+          elif "['embed', <Code2" not in s:
+              raise SystemExit('navigation marker not found')
+
+          marker2 = "{section === 'account-settings' && <AccountSettings session={session} setError={setError} setNotice={setNotice} />}"
+          embed_section = "{section === 'embed' && <EmbedChatbot businessId={businessId} />}"
+          if embed_section not in s:
+              if marker2 not in s:
+                  raise SystemExit('account settings marker not found')
+              s = s.replace(marker2, marker2 + embed_section, 1)
+
+          p.write_text(s)
+          PY
+
+      - name: Add responsive embed styles
+        run: |
+          cat >> src/styles.css <<'CSS'
+
+/* Owner chatbot embed panel */
+.embed-panel { min-width: 0; overflow: hidden; }
+.embed-info { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 18px 0; padding: 12px 14px; border: 1px solid var(--border, #e5e7eb); border-radius: 12px; background: var(--surface-muted, #f8fafc); }
+.embed-info code { max-width: 100%; overflow-wrap: anywhere; font-size: 13px; }
+.embed-code-label { display: block; min-width: 0; }
+.embed-code { display: block; width: 100%; max-width: 100%; min-height: 104px; box-sizing: border-box; resize: vertical; overflow-wrap: anywhere; word-break: break-word; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; line-height: 1.55; }
+.embed-actions { display: flex; justify-content: flex-start; margin-top: 14px; }
+.embed-help { margin-top: 12px; line-height: 1.55; }
+@media (max-width: 700px) {
+  .embed-panel { padding: 16px; }
+  .embed-code { min-height: 130px; font-size: 12px; }
+  .embed-actions .primary-btn { width: 100%; justify-content: center; }
+}
+
+/* Keep document/PDF areas inside the responsive admin workspace */
+.admin-main iframe, .admin-main embed, .admin-main object { display: block; width: 100%; max-width: 100%; height: min(72vh, 760px); border: 0; box-sizing: border-box; }
+.admin-main .document-preview, .admin-main .pdf-preview { width: 100%; max-width: 100%; overflow: hidden; box-sizing: border-box; }
+@media (max-width: 700px) {
+  .admin-main iframe, .admin-main embed, .admin-main object { height: 65vh; min-height: 420px; }
+  .admin-main { min-width: 0; }
+  .panel { max-width: 100%; overflow: hidden; }
+}
+CSS
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/AdminApp.jsx src/styles.css
+          git diff --cached --quiet && echo "No changes needed" && exit 0
+          git commit -m "Add per-business chatbot embed code"
+          git push origin HEAD:main
