@@ -24,6 +24,9 @@ export default async function handler(req, res) {
     return json(res, 500, { error: 'Server configuration is incomplete.' });
   }
 
+  let createdUserId = null;
+  let createdBusinessId = null;
+
   try {
     const authorization = req.headers.authorization || '';
     const accessToken = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
@@ -44,12 +47,41 @@ export default async function handler(req, res) {
     const businessName = typeof body.businessName === 'string' ? body.businessName.trim() : '';
     const clientName = typeof body.clientName === 'string' ? body.clientName.trim() : '';
     const clientEmail = typeof body.clientEmail === 'string' ? body.clientEmail.trim().toLowerCase() : '';
+    const temporaryPassword = typeof body.temporaryPassword === 'string' ? body.temporaryPassword : '';
     const description = typeof body.description === 'string' ? body.description.trim() : '';
     const phone = typeof body.phone === 'string' ? body.phone.trim() : '';
     const city = typeof body.city === 'string' ? body.city.trim() : '';
 
-    if (!businessName || !clientEmail) return json(res, 400, { error: 'Business name and client email are required.' });
-    if (!/^\S+@\S+\.\S+$/.test(clientEmail)) return json(res, 400, { error: 'Please enter a valid client email address.' });
+    if (!businessName || !clientEmail || !temporaryPassword) {
+      return json(res, 400, { error: 'Business name, client email and temporary password are required.' });
+    }
+    if (!/^\S+@\S+\.\S+$/.test(clientEmail)) {
+      return json(res, 400, { error: 'Please enter a valid client email address.' });
+    }
+    if (temporaryPassword.length < 8) {
+      return json(res, 400, { error: 'Temporary password must be at least 8 characters.' });
+    }
+
+    // Create a real password-auth user so the client can sign in immediately.
+    // The password is sent only to Supabase Auth and is never stored in our tables or returned.
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: clientEmail,
+      password: temporaryPassword,
+      email_confirm: true,
+      user_metadata: {
+        name: clientName,
+        role: 'business_owner'
+      }
+    });
+
+    if (authError || !authData?.user?.id) {
+      const message = authError?.message || 'The client account could not be created.';
+      if (/already|exists|registered/i.test(message)) {
+        return json(res, 409, { error: 'This email already has a Supabase account. Use that existing account or choose a different client email.' });
+      }
+      return json(res, 500, { error: message });
+    }
+    createdUserId = authData.user.id;
 
     const baseSlug = slugify(businessName);
     const slug = `${baseSlug}-${crypto.randomUUID().slice(0, 6)}`;
@@ -67,41 +99,32 @@ export default async function handler(req, res) {
       })
       .select('id,name,slug')
       .single();
-    if (businessError) return json(res, 500, { error: `Could not create business: ${businessError.message}` });
 
-    const redirectTo = `${req.headers.origin || process.env.SITE_URL || 'https://ai-chatbot-test-kappa.vercel.app'}/admin`;
-    const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(clientEmail, {
-      data: { name: clientName, business_id: business.id, business_name: business.name },
-      redirectTo
-    });
-
-    if (inviteError || !inviteData?.user?.id) {
-      await supabase.from('businesses').delete().eq('id', business.id);
-      const message = inviteError?.message || 'The invitation could not be created.';
-      if (/already|exists|registered/i.test(message)) {
-        return json(res, 409, { error: 'This email already has a Supabase account. Use a new client email for an invitation.' });
-      }
-      return json(res, 500, { error: message });
-    }
+    if (businessError) throw new Error(`Could not create business: ${businessError.message}`);
+    createdBusinessId = business.id;
 
     const { error: membershipError } = await supabase.from('business_admins').insert({
-      user_id: inviteData.user.id,
-      business_id: business.id,
+      user_id: createdUserId,
+      business_id: createdBusinessId,
       role: 'owner'
     });
 
-    if (membershipError) {
-      await supabase.auth.admin.deleteUser(inviteData.user.id);
-      await supabase.from('businesses').delete().eq('id', business.id);
-      return json(res, 500, { error: `Business was created but client access could not be assigned: ${membershipError.message}` });
-    }
+    if (membershipError) throw new Error(`Business was created but client access could not be assigned: ${membershipError.message}`);
 
     return json(res, 201, {
-      message: 'Business created and client invitation sent successfully.',
+      message: 'Business created successfully. The client can now sign in with the provided email and temporary password.',
       business: { ...business, clientEmail, clientName }
     });
   } catch (error) {
     console.error('Create business error:', error);
-    return json(res, 500, { error: 'Could not create the business and client invitation.' });
+
+    if (createdBusinessId) {
+      await supabase.from('businesses').delete().eq('id', createdBusinessId);
+    }
+    if (createdUserId) {
+      await supabase.auth.admin.deleteUser(createdUserId);
+    }
+
+    return json(res, 500, { error: error.message || 'Could not create the business and client account.' });
   }
 }
