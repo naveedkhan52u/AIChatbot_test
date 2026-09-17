@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Bot, Mic, Send, Sparkles, UserRound, Volume2, Square } from 'lucide-react';
+import { Bot, Mic, Send, Sparkles, UserRound, Volume2, Square, Copy, Check, Code2, X } from 'lucide-react';
+import { getSupabase } from './lib/supabase';
 import AdminApp from './AdminApp';
 import SuperAdminBusinesses from './SuperAdminBusinesses';
 import './styles.css';
@@ -97,8 +98,67 @@ function ChatbotApp({ embedded = false }) {
   </section></main>;
 }
 
+function EmbedCodePanel() {
+  const [businessId, setBusinessId] = useState(null);
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadBusinessId() {
+      try {
+        const supabase = getSupabase();
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData.session?.user?.id;
+        if (!userId) return;
+        const { data, error } = await supabase.from('business_admins').select('business_id').eq('user_id', userId).maybeSingle();
+        if (error) throw error;
+        if (mounted) setBusinessId(data?.business_id || null);
+      } catch (error) {
+        console.error('Unable to load business ID for embed code:', error);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    loadBusinessId();
+    return () => { mounted = false; };
+  }, []);
+
+  if (loading || !businessId) return null;
+
+  const embedCode = `<script src="https://ai-chatbot-test-kappa.vercel.app/chatbot.js" data-business-id="${businessId}" defer></script>`;
+
+  async function copyCode() {
+    try {
+      await navigator.clipboard.writeText(embedCode);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch (error) {
+      console.error('Could not copy embed code:', error);
+    }
+  }
+
+  return <>
+    <button type="button" onClick={() => setOpen(true)} aria-label="Get chatbot embed code" style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 1000, display: 'inline-flex', alignItems: 'center', gap: 8, border: 0, borderRadius: 12, padding: '12px 16px', background: '#172033', color: '#fff', fontWeight: 700, cursor: 'pointer', boxShadow: '0 10px 30px rgba(0,0,0,.18)' }}><Code2 size={17} /> Embed Chatbot</button>
+    {open && <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(15,23,42,.45)', display: 'grid', placeItems: 'center', padding: 20 }}>
+      <section onClick={event => event.stopPropagation()} style={{ width: 'min(680px, 100%)', background: '#fff', borderRadius: 18, padding: 24, boxShadow: '0 24px 80px rgba(0,0,0,.25)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+          <div><div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: 20 }}><Code2 size={20} /> Embed your AI chatbot</div><p style={{ margin: '8px 0 0', color: '#64748b', lineHeight: 1.5 }}>Copy this code and paste it before the closing <code>&lt;/body&gt;</code> tag on the owner’s website.</p></div>
+          <button type="button" onClick={() => setOpen(false)} aria-label="Close" style={{ border: 0, background: '#f1f5f9', borderRadius: 8, width: 34, height: 34, display: 'grid', placeItems: 'center', cursor: 'pointer' }}><X size={18} /></button>
+        </div>
+        <div style={{ marginTop: 20, padding: 16, background: '#0f172a', borderRadius: 12, color: '#e2e8f0', overflowX: 'auto', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 13, lineHeight: 1.6 }}><code>{embedCode}</code></div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 13, color: '#64748b' }}>Business ID: <code>{businessId}</code></div>
+          <button type="button" onClick={copyCode} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: 0, borderRadius: 10, padding: '11px 15px', background: '#172033', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>{copied ? <Check size={17} /> : <Copy size={17} />}{copied ? 'Copied' : 'Copy Embed Code'}</button>
+        </div>
+      </section>
+    </div>}
+  </>;
+}
+
 function RootAdmin() {
-  return <><AdminApp /><SuperAdminBusinesses /></>;
+  return <><AdminApp /><SuperAdminBusinesses /><EmbedCodePanel /></>;
 }
 
 function RootApp() {
