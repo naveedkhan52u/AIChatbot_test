@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Building2, Trash2, X, RefreshCw, ShieldCheck } from 'lucide-react';
 import { getSupabase } from './lib/supabase';
+import './superadmin.css';
 
 const SUPER_ADMIN_EMAIL = 'naveedkhanu52@gmail.com';
 
