@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Building2, Trash2, X, RefreshCw, ShieldCheck } from 'lucide-react';
 import { getSupabase } from './lib/supabase';
 
-const SUPER_ADMIN_EMAIL = 'naveedkhanu@gmail.com';
+const SUPER_ADMIN_EMAIL = 'naveedkhanu52@gmail.com';
 
 export default function SuperAdminBusinesses() {
   const [session, setSession] = useState(null);
