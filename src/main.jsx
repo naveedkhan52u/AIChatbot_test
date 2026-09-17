@@ -127,7 +127,7 @@ function EmbedCodePanel() {
 
   if (loading || !businessId) return null;
 
-  const embedCode = `<script src="https://ai-chatbot-test-kappa.vercel.app/chatbot.js" data-business-id="${businessId}" defer></script>`;
+  const embedCode = `<script src="https://ai-chatbot-test-nine-iota.vercel.app/chatbot.js" data-business-id="${businessId}" defer></script>`;
 
   async function copyCode() {
     try {
