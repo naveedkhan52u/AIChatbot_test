@@ -4,8 +4,7 @@ import { Building2, Trash2, X, RefreshCw, ShieldCheck, KeyRound } from 'lucide-r
 import { getSupabase } from './lib/supabase';
 import './superadmin.css';
 
-const SUPER_ADMIN_EMAIL = 'naveedkhanu@gmail.com';
-const ACTUAL_SUPER_ADMIN_EMAIL = 'naveedkhanu52@gmail.com';
+const SUPER_ADMIN_USER_ID = '49149fcb-fbd5-4079-befd-3af7fd8e1725';
 
 export default function SuperAdminBusinesses() {
   const [session, setSession] = useState(null);
@@ -25,7 +24,7 @@ export default function SuperAdminBusinesses() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  const isSuperAdmin = session?.user?.email?.toLowerCase() === ACTUAL_SUPER_ADMIN_EMAIL;
+  const isSuperAdmin = session?.user?.id === SUPER_ADMIN_USER_ID;
 
   useEffect(() => {
     if (!isSuperAdmin) return undefined;
