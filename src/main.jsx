@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Bot, Mic, Send, Sparkles, UserRound, Volume2, Square } from 'lucide-react';
 import AdminApp from './AdminApp';
+import SuperAdminBusinesses from './SuperAdminBusinesses';
 import './styles.css';
 
 const suggestions = ['What services do you provide?', 'What are your opening hours?', 'How can I make a booking?'];
@@ -25,28 +26,20 @@ function ChatbotApp({ embedded = false }) {
       setSpeechSupported(false);
       return;
     }
-
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = document.documentElement.lang || 'en-US';
-
     recognition.onstart = () => setListening(true);
     recognition.onend = () => setListening(false);
     recognition.onerror = () => setListening(false);
     recognition.onresult = event => {
       let transcript = '';
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        transcript += event.results[i][0].transcript;
-      }
+      for (let i = event.resultIndex; i < event.results.length; i += 1) transcript += event.results[i][0].transcript;
       setInput(transcript);
     };
-
     recognitionRef.current = recognition;
-    return () => {
-      recognition.stop();
-      recognitionRef.current = null;
-    };
+    return () => { recognition.stop(); recognitionRef.current = null; };
   }, []);
 
   function toggleListening() {
@@ -54,15 +47,8 @@ function ChatbotApp({ embedded = false }) {
       setMessages(current => [...current, { role: 'assistant', text: 'Voice input is not supported by this browser. Please use Chrome or Edge, or type your question.' }]);
       return;
     }
-    if (listening) {
-      recognitionRef.current?.stop();
-      return;
-    }
-    try {
-      recognitionRef.current?.start();
-    } catch (error) {
-      console.error(error);
-    }
+    if (listening) { recognitionRef.current?.stop(); return; }
+    try { recognitionRef.current?.start(); } catch (error) { console.error(error); }
   }
 
   function readResponse(text, index) {
@@ -71,18 +57,13 @@ function ChatbotApp({ embedded = false }) {
       return;
     }
     window.speechSynthesis.cancel();
-    if (speakingIndex === index) {
-      setSpeakingIndex(null);
-      return;
-    }
+    if (speakingIndex === index) { setSpeakingIndex(null); return; }
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 1;
+    utterance.lang = 'en-US'; utterance.rate = 1;
     utterance.onstart = () => setSpeakingIndex(index);
     utterance.onend = () => setSpeakingIndex(null);
     utterance.onerror = () => setSpeakingIndex(null);
-    setSpeakingIndex(index);
-    window.speechSynthesis.speak(utterance);
+    setSpeakingIndex(index); window.speechSynthesis.speak(utterance);
   }
 
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
@@ -116,9 +97,13 @@ function ChatbotApp({ embedded = false }) {
   </section></main>;
 }
 
+function RootAdmin() {
+  return <><AdminApp /><SuperAdminBusinesses /></>;
+}
+
 function RootApp() {
   const embedded = new URLSearchParams(window.location.search).get('embed') === '1';
-  if (window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/')) return <AdminApp />;
+  if (window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/')) return <RootAdmin />;
   return <ChatbotApp embedded={embedded} />;
 }
 
