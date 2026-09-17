@@ -69,7 +69,7 @@ export default function AccountSettings({ session, setError, setNotice }) {
       if (error) throw error;
       setNewEmail('');
       setConfirmEmail('');
-      setNotice('✓ Verification email sent. The new email will become active only after the required verification is completed.');
+      setNotice('✓ Verification email sent. Check your email to verify your new email.');
     } catch (err) {
       setError(err.message || 'Could not start the email change.');
     } finally {
@@ -95,7 +95,7 @@ export default function AccountSettings({ session, setError, setNotice }) {
         <label><span>New Email</span><input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} autoComplete="email" required /></label>
         <label><span>Confirm New Email</span><input type="email" value={confirmEmail} onChange={e => setConfirmEmail(e.target.value)} autoComplete="email" required /></label>
       </div>
-      <div className="security-note"><KeyRound size={16} /><span>Supabase will send an email verification link. The login email is not treated as changed until the required verification is completed.</span></div>
+      <div className="security-note"><KeyRound size={16} /><span>Check your Email to Verify Your New Email</span></div>
       <button className="primary-btn" type="submit" disabled={emailSaving}>{emailSaving ? 'Sending verification...' : 'Send Verification Email'}</button>
     </form>
   </div>;
