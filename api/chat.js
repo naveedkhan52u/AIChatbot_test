@@ -52,7 +52,7 @@ export default async function handler(req, res) {
   if (!process.env.GROQ_API_KEY || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return json(res, 500, { error: 'Server configuration is incomplete.' });
 
   try {
-    const { message, conversationId, businessId, businessSlug } = req.body || {};
+    const { message, businessId, businessSlug } = req.body || {};
     const userMessage = typeof message === 'string' ? message.trim() : '';
     if (!userMessage) return json(res, 400, { error: 'Message is required.' });
     if (userMessage.length > 2000) return json(res, 400, { error: 'Message is too long.' });
@@ -93,22 +93,7 @@ export default async function handler(req, res) {
       knowledge_documents: selectedDocuments
     };
 
-    let conversation = null;
-    if (conversationId) {
-      const result = await supabase.from('conversations').select('id').eq('id', conversationId).eq('business_id', business.id).single();
-      if (!result.error) conversation = result.data;
-    }
-    if (!conversation) {
-      const created = await supabase.from('conversations').insert({ business_id: business.id, session_id: crypto.randomUUID(), status: 'open' }).select('id').single();
-      if (created.error) return json(res, 500, { error: 'Could not create conversation.' });
-      conversation = created.data;
-    }
-
-    // Keep only a short recent window instead of replaying the entire conversation.
-    const historyResult = await supabase.from('messages').select('role,content').eq('conversation_id', conversation.id).order('created_at', { ascending: false }).limit(6);
-    const history = (historyResult.data || []).reverse();
-    const userInsert = await supabase.from('messages').insert({ conversation_id: conversation.id, role: 'user', content: userMessage });
-    if (userInsert.error) return json(res, 500, { error: 'Could not save the customer message.' });
+    // Chat messages are intentionally not persisted. The browser keeps the current session in memory only.
 
     const prompt = `You are the customer support assistant for ${business.name}.
 
@@ -137,8 +122,8 @@ SECURITY:
 BUSINESS KNOWLEDGE:
 ${JSON.stringify(knowledge)}
 
-RECENT CONVERSATION (last 6 messages):
-${JSON.stringify(history)}
+CURRENT CHAT CONTEXT:
+Only answer the current customer question. Do not assume access to earlier messages.
 
 CUSTOMER QUESTION:
 ${userMessage}`;
@@ -157,9 +142,7 @@ ${userMessage}`;
     }
 
     const answer = response.output_text?.trim() || 'I could not generate a response right now.';
-    const assistantInsert = await supabase.from('messages').insert({ conversation_id: conversation.id, role: 'assistant', content: answer });
-    if (assistantInsert.error) console.error('Assistant message save error:', assistantInsert.error);
-    return json(res, 200, { answer, conversationId: conversation.id });
+    return json(res, 200, { answer });
   } catch (error) {
     console.error('Chat API error:', error);
     return json(res, 500, { error: 'The chatbot could not process your request.' });
