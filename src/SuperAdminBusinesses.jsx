@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Building2, Trash2, X, RefreshCw, ShieldCheck, KeyRound } from 'lucide-react';
 import { getSupabase } from './lib/supabase';
 import './superadmin.css';
@@ -8,7 +7,6 @@ const SUPER_ADMIN_USER_ID = '49149fcb-fbd5-4079-befd-3af7fd8e1725';
 
 export default function SuperAdminBusinesses() {
   const [session, setSession] = useState(null);
-  const [buttonHost, setButtonHost] = useState(null);
   const [open, setOpen] = useState(false);
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -25,29 +23,6 @@ export default function SuperAdminBusinesses() {
   }, []);
 
   const isSuperAdmin = session?.user?.id === SUPER_ADMIN_USER_ID;
-
-  useEffect(() => {
-    if (!isSuperAdmin) return undefined;
-    let host = null;
-    let retryTimer = null;
-    const attach = () => {
-      const nav = document.querySelector('.admin-layout .sidebar nav');
-      if (!nav || host) return;
-      host = document.createElement('div');
-      host.dataset.superAdminBusinesses = 'true';
-      nav.appendChild(host);
-      setButtonHost(host);
-    };
-    attach();
-    if (!host) retryTimer = window.setInterval(attach, 150);
-    const observer = new MutationObserver(attach);
-    observer.observe(document.body, { childList: true, subtree: true });
-    return () => {
-      if (retryTimer) window.clearInterval(retryTimer);
-      observer.disconnect();
-      host?.remove();
-    };
-  }, [isSuperAdmin]);
 
   // The main dashboard already contains the Create Business form. This enhancer
   // adds the password field and securely submits that form to the new password-auth API.
@@ -215,12 +190,9 @@ export default function SuperAdminBusinesses() {
 
   if (!isSuperAdmin) return null;
 
-  const button = buttonHost ? createPortal(
-    <button type="button" onClick={openBusinesses} className="super-admin-nav-button"><Building2 size={17} /> Businesses</button>,
-    buttonHost
-  ) : null;
+  const button = <button type="button" onClick={openBusinesses} className="super-admin-nav-button"><Building2 size={17} /> Businesses</button>;
 
-  const modal = open ? createPortal(
+  const modal = open ? (
     <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(15,23,42,.48)', display: 'grid', placeItems: 'center', padding: 20 }}>
       <div style={{ width: 'min(980px, 100%)', maxHeight: '88vh', overflow: 'auto', background: '#fff', borderRadius: 18, boxShadow: '0 30px 90px rgba(0,0,0,.25)' }}>
         <div style={{ position: 'sticky', top: 0, zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 15, padding: '18px 22px', background: '#fff', borderBottom: '1px solid #e8ecf2' }}>
@@ -232,7 +204,7 @@ export default function SuperAdminBusinesses() {
           {loading ? <div className="loading-card">Loading businesses...</div> : businesses.length === 0 ? <div className="empty-card">No created businesses found.</div> : <div style={{ display: 'grid', gap: 10 }}>{businesses.map(item => <div key={`${item.businessId}-${item.ownerEmail}`} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1.5fr auto', alignItems: 'center', gap: 15, padding: 15, border: '1px solid #e4e9f1', borderRadius: 13, background: '#fff' }}><div><div style={{ fontSize: 11, color: '#8a95a7', marginBottom: 4 }}>Owner Name</div><strong>{item.ownerName || 'Not provided'}</strong></div><div><div style={{ fontSize: 11, color: '#8a95a7', marginBottom: 4 }}>Business Name</div><strong>{item.businessName}</strong></div><div><div style={{ fontSize: 11, color: '#8a95a7', marginBottom: 4 }}>Email</div><span style={{ color: '#536177', fontSize: 13, overflowWrap: 'anywhere' }}>{item.ownerEmail}</span></div><button type="button" disabled={deleting === item.businessId} onClick={() => deleteBusiness(item)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid #ead4d4', background: '#fff', color: '#a44747', borderRadius: 9, padding: '8px 10px', cursor: deleting === item.businessId ? 'wait' : 'pointer' }}><Trash2 size={15} />{deleting === item.businessId ? 'Deleting...' : 'Delete'}</button></div>)}</div>}
         </div>
       </div>
-    </div>, document.body
+    </div>
   ) : null;
 
   return <>{button}{modal}</>;
