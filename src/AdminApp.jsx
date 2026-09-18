@@ -39,11 +39,11 @@ function Login({ onLoggedIn }) {
   const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [showPassword, setShowPassword] = useState(false); const [loading, setLoading] = useState(false); const [error, setError] = useState('');
   async function submit(event) { event.preventDefault(); setLoading(true); setError(''); try { const { data, error } = await getSupabase().auth.signInWithPassword({ email: email.trim(), password }); if (error) throw error; if (!data.session) throw new Error('Login did not create a session.'); onLoggedIn(data.session); } catch (err) { setError(err.message || 'Unable to sign in.'); } finally { setLoading(false); } }
   return <main className="admin-page login-page"><form className="auth-card login-card" onSubmit={submit}>
-    <div className="login-brand"><div className="auth-logo"><Bot size={23} /></div><span>AI Support</span></div>
-    <div className="login-heading"><h1>Welcome back</h1><p>Sign in to manage your AI customer support workspace.</p></div>
-    <label><span>Email address</span><input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" placeholder="you@example.com" required /></label>
+    <div className="auth-logo"><Bot size={23} /></div>
+    <h1>Sign in</h1><p className="login-subtitle">Welcome back. Sign in to your admin dashboard.</p>
+    <label><span>Email</span><input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" placeholder="Enter your email" required /></label>
     <label><span>Password</span><div className="password-field"><input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" placeholder="Enter your password" required /><button type="button" className="password-toggle" onClick={() => setShowPassword(value => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'} title={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></label>
-    <button className="primary-btn login-submit" type="submit" disabled={loading}>{loading ? 'Signing in...' : 'Sign in to dashboard'}</button>
+    <button className="primary-btn login-submit" type="submit" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
     {error && <div className="error-box">{error}</div>}
     <button className="back-link" type="button" onClick={() => { window.location.href = '/'; }}>← Back to chatbot</button>
   </form></main>;
