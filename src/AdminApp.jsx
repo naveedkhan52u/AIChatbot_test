@@ -101,6 +101,70 @@ function LeadsSection({ businessId, onDelete }) {
   return <div className="panel"><div className="section-heading"><div><h2>Leads</h2><p className="muted">Customer contact requests. Leads are automatically removed after 7 days.</p></div></div>{rows.length === 0 ? <div className="empty-card">No leads found.</div> : <div className="table-wrap"><table><thead><tr><th>Customer Name</th><th>Email</th><th>Contact</th><th>Subject</th><th>Created At</th><th aria-label="Delete"></th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td>{row.name || ''}</td><td>{row.email || ''}</td><td>{row.contact || ''}</td><td>{row.subject || ''}</td><td>{row.created_at ? new Date(row.created_at).toLocaleString() : ''}</td><td><button type="button" className="lead-delete-btn" onClick={() => { if (window.confirm('Delete this lead?')) { onDelete(row.id); setRows(current => current.filter(item => item.id !== row.id)); } }} aria-label="Delete lead" title="Delete lead">×</button></td></tr>)}</tbody></table></div>}</div>;
 }
 
-function DataSection({ title, table, fields, businessId }) { const [rows, setRows] = useState([]); const [loading, setLoading] = useState(true); const supabase = getSupabase(); useEffect(() => { (async () => { setLoading(true); const { data } = await supabase.from(table).select(fields.join(',')).eq('business_id', businessId).order('created_at', { ascending: false }); setRows(data || []); setLoading(false); })(); }, [table, businessId]); if (loading) return <div className="loading-card">Loading {title.toLowerCase()}...</div>; return <div className="panel"><div className="section-heading"><div><h2>{title}</h2><p className="muted">Business-specific {title.toLowerCase()}.</p></div></div>{rows.length === 0 ? <div className="empty-card">No {title.toLowerCase()} found.</div> : <div className="table-wrap"><table><thead><tr>{fields.map(field => <th key={field}>{field.replaceAll('_',' ')}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr key={row.id || index}>{fields.map(field => <td key={field}>{typeof row[field] === 'object' ? JSON.stringify(row[field]) : String(row[field] ?? '')}</td>)}</tr>)}</tbody></table></div>}</div>; }
+function DataSection({ title, table, fields, businessId }) {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [form, setForm] = useState(table === 'services'
+    ? { name: '', description: '', price: '', currency: 'PKR', availability: '', status: 'active' }
+    : { question: '', answer: '', category: '', status: 'active' });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const supabase = getSupabase();
+
+  async function loadRows() {
+    setLoading(true);
+    const { data } = await supabase.from(table).select(fields.join(',')).eq('business_id', businessId).order('created_at', { ascending: false });
+    setRows(data || []);
+    setLoading(false);
+  }
+  useEffect(() => { loadRows(); }, [table, businessId]);
+
+  function openForm() {
+    setError('');
+    setForm(table === 'services'
+      ? { name: '', description: '', price: '', currency: 'PKR', availability: '', status: 'active' }
+      : { question: '', answer: '', category: '', status: 'active' });
+    setFormOpen(true);
+  }
+
+  async function addRow(event) {
+    event.preventDefault();
+    if (saving) return;
+    setSaving(true); setError('');
+    try {
+      const payload = { business_id: businessId, ...form };
+      if (table === 'services' && form.price !== '') payload.price = Number(form.price);
+      const { error: insertError } = await supabase.from(table).insert(payload);
+      if (insertError) throw insertError;
+      setFormOpen(false);
+      await loadRows();
+    } catch (err) {
+      setError(err.message || `Could not add ${title.toLowerCase()}.`);
+    } finally { setSaving(false); }
+  }
+
+  if (loading) return <div className="loading-card">Loading {title.toLowerCase()}...</div>;
+  const isServices = table === 'services';
+  return <div className="panel">
+    <div className="section-heading"><div><h2>{title}</h2><p className="muted">Business-specific {title.toLowerCase()}.</p></div><button type="button" className="primary-btn" onClick={openForm}>+ Add {isServices ? 'Service' : 'FAQ'}</button></div>
+    {error && <div className="error-box">{error}</div>}
+    {formOpen && <form className="form-panel add-data-form" onSubmit={addRow}>
+      {isServices ? <div className="form-grid">
+        <label><span>Service name *</span><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required /></label>
+        <label><span>Price</span><input type="number" min="0" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="e.g. 5000" /></label>
+        <label><span>Currency</span><input value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })} /></label>
+        <label><span>Availability</span><input value={form.availability} onChange={e => setForm({ ...form, availability: e.target.value })} placeholder="e.g. Mon-Sat, 9 AM-6 PM" /></label>
+        <label className="wide"><span>Description</span><textarea rows="4" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></label>
+      </div> : <div className="form-grid">
+        <label className="wide"><span>Question *</span><input value={form.question} onChange={e => setForm({ ...form, question: e.target.value })} required /></label>
+        <label className="wide"><span>Answer *</span><textarea rows="5" value={form.answer} onChange={e => setForm({ ...form, answer: e.target.value })} required /></label>
+        <label><span>Category</span><input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} /></label>
+      </div>}
+      <div className="edit-actions"><button type="button" className="secondary-btn" onClick={() => setFormOpen(false)}>Cancel</button><button type="submit" className="primary-btn" disabled={saving}>{saving ? 'Saving...' : `Add ${isServices ? 'Service' : 'FAQ'}`}</button></div>
+    </form>}
+    {rows.length === 0 ? <div className="empty-card">No {title.toLowerCase()} found.</div> : <div className="table-wrap"><table><thead><tr>{fields.map(field => <th key={field}>{field.replaceAll('_',' ')}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr key={row.id || index}>{fields.map(field => <td key={field}>{typeof row[field] === 'object' ? JSON.stringify(row[field]) : String(row[field] ?? '')}</td>)}</tr>)}</tbody></table></div>}
+  </div>;
+}
 
 export default function AdminApp() { const [session, setSession] = useState(null); const [loading, setLoading] = useState(true); const supabase = getSupabase(); useEffect(() => { let mounted = true; supabase.auth.getSession().then(({ data }) => { if (mounted) { setSession(data.session); setLoading(false); } }); const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession)); return () => { mounted = false; listener.subscription.unsubscribe(); }; }, []); if (loading) return <main className="admin-page"><div className="loading-card">Loading secure admin access...</div></main>; if (!session) return <Login onLoggedIn={setSession} />; return <AdminDashboard session={session} onSignOut={() => setSession(null)} />; }
