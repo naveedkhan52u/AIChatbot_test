@@ -121,7 +121,7 @@ function ChatbotApp({ embedded = false }) {
         <input type="email" value={leadForm.email} onChange={e => setLeadForm({ ...leadForm, email: e.target.value })} placeholder="Email" required />
         <input value={leadForm.contact} onChange={e => setLeadForm({ ...leadForm, contact: e.target.value })} placeholder="Contact / WhatsApp Number" required />
         <input value={leadForm.subject} onChange={e => setLeadForm({ ...leadForm, subject: e.target.value })} placeholder="Subject" required />
-        <div className="lead-form-actions"><button type="submit" disabled={leadSending}>{leadSending ? 'Sending...' : 'Send Details'}</button></div>
+        <div className="lead-form-actions"><button type="button" className="lead-close-btn" onClick={() => { setLeadOpen(false); setLeadNotice(''); }}>Close</button><button type="submit" disabled={leadSending}>{leadSending ? 'Sending...' : 'Send Details'}</button></div>
       </form>}
       {leadNotice && <div className="lead-notice">{leadNotice}</div>}
     </div>
