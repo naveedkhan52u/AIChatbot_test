@@ -142,7 +142,12 @@ ${userMessage}`;
     }
 
     const answer = response.output_text?.trim() || 'I could not generate a response right now.';
-    return json(res, 200, { answer });
+    const irrelevantMessage = `⚠️ I can only assist with ${business.name} and its services.`;
+    const normalizedAnswer = answer.replace(/\*\*|__/g, '').replace(/\s+/g, ' ').trim();
+    const irrelevant = normalizedAnswer.toLowerCase().includes(irrelevantMessage.toLowerCase().replace('⚠️ ', '')) ||
+      normalizedAnswer.toLowerCase().includes('i can only assist with') ||
+      normalizedAnswer.toLowerCase().includes('only assist with this business');
+    return json(res, 200, { answer, irrelevant });
   } catch (error) {
     console.error('Chat API error:', error);
     return json(res, 500, { error: 'The chatbot could not process your request.' });
