@@ -65,3 +65,5 @@ body { margin:0; min-width:320px; } button,input,textarea { font:inherit; } butt
 .embedded-shell .lead-form{padding:7px;margin-top:5px}.embedded-shell .lead-warning{font-size:9px}.embedded-shell .lead-form-title{font-size:8px;margin:4px 0 5px}.embedded-shell .lead-form input{font-size:9px;padding:5px 6px;margin-bottom:4px}.embedded-shell .lead-form-actions button{font-size:8px;padding:4px 6px}.embedded-shell .lead-notice{font-size:8px}
 
 .lead-delete-btn{border:0;background:transparent;color:#94a3b8;width:28px;height:28px;padding:0;border-radius:7px;font-size:20px;line-height:1;cursor:pointer}.lead-delete-btn:hover{background:#fee2e2;color:#dc2626}
+
+.contact-highlight{border:1px solid #bfdbfe!important;background:#f8fbff;border-radius:12px;padding:10px}.contact-highlight>span{color:#1d4ed8;font-weight:600}.contact-highlight small{display:block;color:#64748b;font-size:11px;font-weight:500;margin-top:2px}
