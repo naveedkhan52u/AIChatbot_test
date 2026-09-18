@@ -122,22 +122,74 @@ function DataSection({ title, table, fields, businessId }) {
 
   function openForm() {
     setError('');
+    setEditingId(null);
     setForm(table === 'services'
       ? { name: '', description: '', price: '', currency: 'PKR', availability: '', status: 'active' }
       : { question: '', answer: '', category: '', status: 'active' });
     setFormOpen(true);
   }
 
-  async function addRow(event) {
+  function editRow(row) {
+    setError('');
+    setEditingId(row.id);
+    if (table === 'services') {
+      setForm({
+        name: row.name || '',
+        description: row.description || '',
+        price: row.price ?? '',
+        currency: row.currency || 'PKR',
+        availability: row.availability || '',
+        status: row.status || 'active'
+      });
+    } else {
+      setForm({
+        question: row.question || '',
+        answer: row.answer || '',
+        category: row.category || '',
+        status: row.status || 'active'
+      });
+    }
+    setFormOpen(true);
+  }
+
+  async function deleteRow(row) {
+    if (!row?.id || !window.confirm(`Delete this ${table === 'services' ? 'service' : 'FAQ'}?`)) return;
+    setError('');
+    try {
+      const { error: deleteError } = await supabase
+        .from(table)
+        .delete()
+        .eq('id', row.id)
+        .eq('business_id', businessId);
+      if (deleteError) throw deleteError;
+      setRows(current => current.filter(item => item.id !== row.id));
+    } catch (err) {
+      setError(err.message || `Could not delete this ${title.toLowerCase().slice(0, -1)}.`);
+    }
+  }
+
+  async function saveRow(event) {
     event.preventDefault();
     if (saving) return;
     setSaving(true); setError('');
     try {
       const payload = { business_id: businessId, ...form };
-      if (table === 'services' && form.price !== '') payload.price = Number(form.price);
-      const { error: insertError } = await supabase.from(table).insert(payload);
-      if (insertError) throw insertError;
+      if (table === 'services') payload.price = form.price === '' ? null : Number(form.price);
+
+      if (editingId) {
+        const { error: updateError } = await supabase
+          .from(table)
+          .update(payload)
+          .eq('id', editingId)
+          .eq('business_id', businessId);
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase.from(table).insert(payload);
+        if (insertError) throw insertError;
+      }
+
       setFormOpen(false);
+      setEditingId(null);
       await loadRows();
     } catch (err) {
       setError(err.message || `Could not add ${title.toLowerCase()}.`);
@@ -149,7 +201,7 @@ function DataSection({ title, table, fields, businessId }) {
   return <div className="panel">
     <div className="section-heading"><div><h2>{title}</h2><p className="muted">Business-specific {title.toLowerCase()}.</p></div><button type="button" className="primary-btn" onClick={openForm}>+ Add {isServices ? 'Service' : 'FAQ'}</button></div>
     {error && <div className="error-box">{error}</div>}
-    {formOpen && <form className="form-panel add-data-form" onSubmit={addRow}>
+    {formOpen && <form className="form-panel add-data-form" onSubmit={saveRow}>
       {isServices ? <div className="form-grid">
         <label><span>Service name *</span><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required /></label>
         <label><span>Price</span><input type="number" min="0" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="e.g. 5000" /></label>
@@ -161,9 +213,9 @@ function DataSection({ title, table, fields, businessId }) {
         <label className="wide"><span>Answer *</span><textarea rows="5" value={form.answer} onChange={e => setForm({ ...form, answer: e.target.value })} required /></label>
         <label><span>Category</span><input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} /></label>
       </div>}
-      <div className="edit-actions"><button type="button" className="secondary-btn" onClick={() => setFormOpen(false)}>Cancel</button><button type="submit" className="primary-btn" disabled={saving}>{saving ? 'Saving...' : `Add ${isServices ? 'Service' : 'FAQ'}`}</button></div>
+      <div className="edit-actions"><button type="button" className="secondary-btn" onClick={() => { setFormOpen(false); setEditingId(null); }}>Cancel</button><button type="submit" className="primary-btn" disabled={saving}>{saving ? 'Saving...' : (editingId ? `Save ${isServices ? 'Service' : 'FAQ'}` : `Add ${isServices ? 'Service' : 'FAQ'}`)}</button></div>
     </form>}
-    {rows.length === 0 ? <div className="empty-card">No {title.toLowerCase()} found.</div> : <div className="table-wrap"><table><thead><tr>{fields.map(field => <th key={field}>{field.replaceAll('_',' ')}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr key={row.id || index}>{fields.map(field => <td key={field}>{typeof row[field] === 'object' ? JSON.stringify(row[field]) : String(row[field] ?? '')}</td>)}</tr>)}</tbody></table></div>}
+    {rows.length === 0 ? <div className="empty-card">No {title.toLowerCase()} found.</div> : <div className="table-wrap"><table><thead><tr>{fields.map(field => <th key={field}>{field.replaceAll('_',' ')}</th>)}<th>Actions</th></tr></thead><tbody>{rows.map((row, index) => <tr key={row.id || index}>{fields.map(field => <td key={field}>{typeof row[field] === 'object' ? JSON.stringify(row[field]) : String(row[field] ?? '')}</td>)}<td><div className="data-row-actions"><button type="button" className="secondary-btn data-edit-btn" onClick={() => editRow(row)}>Edit</button><button type="button" className="danger-btn data-delete-btn" onClick={() => deleteRow(row)}>Delete</button></div></td></tr>)}</tbody></table></div>}
   </div>;
 }
 
