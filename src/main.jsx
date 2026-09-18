@@ -94,10 +94,12 @@ function ChatbotApp({ embedded = false }) {
     try {
       const response = await fetch('/api/contact-lead', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ ...leadForm, businessId, businessSlug })
       });
-      const data = await response.json();
+      const raw = await response.text();
+      let data = {};
+      try { data = raw ? JSON.parse(raw) : {}; } catch { data = { error: raw.replace(/<[^>]*>/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 220) || 'The server returned an unexpected response.' }; }
       if (!response.ok) throw new Error(data.error || 'Could not send your details.');
       setLeadForm({ name: '', email: '', subject: '' });
       setLeadOpen(false);
