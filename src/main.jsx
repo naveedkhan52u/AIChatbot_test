@@ -15,7 +15,7 @@ function ChatbotApp({ embedded = false }) {
   const [messages, setMessages] = useState([{ role: 'assistant', text: 'Hello! I’m your AI customer support assistant. Ask me about our services, prices, opening hours, or bookings.' }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [contactOpen, setContactOpen] = useState(false); const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '' }); const [contactSending, setContactSending] = useState(false); const [contactNotice, setContactNotice] = useState('');
+  const [leadOpen, setLeadOpen] = useState(false); const [leadForm, setLeadForm] = useState({ name: '', email: '', subject: '' }); const [leadSending, setLeadSending] = useState(false); const [leadNotice, setLeadNotice] = useState('');
   const [listening, setListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
   const [speakingIndex, setSpeakingIndex] = useState(null);
@@ -79,42 +79,48 @@ function ChatbotApp({ embedded = false }) {
       const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: value, businessId, businessSlug }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Request failed');
-      setMessages(current => [...current, { role: 'assistant', text: data.answer }]);
+      setMessages(current => [...current, { role: 'assistant', text: data.answer, irrelevant: Boolean(data.irrelevant) }]);
+      if (data.irrelevant) { setLeadOpen(true); setLeadNotice(''); }
     } catch (error) {
       setMessages(current => [...current, { role: 'assistant', text: 'I’m unable to connect to the support service right now. Please try again shortly.' }]);
       console.error(error);
     } finally { setLoading(false); }
   }
 
-  async function submitContact(event) {
+  async function submitLead(event) {
     event.preventDefault();
-    if (contactSending) return;
-    setContactSending(true); setContactNotice('');
+    if (leadSending) return;
+    setLeadSending(true); setLeadNotice('');
     try {
-      const response = await fetch('/api/contact-lead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...contactForm, businessId, businessSlug }) });
+      const response = await fetch('/api/contact-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...leadForm, businessId, businessSlug })
+      });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Could not send your contact request.');
-      setContactForm({ name: '', email: '', subject: '' });
-      setContactNotice('Your contact request was sent successfully.');
-      setContactOpen(false);
-    } catch (error) { setContactNotice(error.message || 'Could not send your contact request.'); }
-    finally { setContactSending(false); }
+      if (!response.ok) throw new Error(data.error || 'Could not send your details.');
+      setLeadForm({ name: '', email: '', subject: '' });
+      setLeadOpen(false);
+      setLeadNotice('Thank you. Your details were sent to this business.');
+    } catch (error) {
+      setLeadNotice(error.message || 'Could not send your details.');
+    } finally { setLeadSending(false); }
   }
 
   return <main className={`app-shell${embedded ? ' embedded-shell' : ''}`}><section className="chat-card">
     <header className="chat-header"><div className="brand-icon"><Bot size={24} /></div><div><h1>AI Customer Support</h1><p><span className="status-dot" /> Online assistant</p></div>{!embedded && <button className="admin-link" onClick={() => { window.location.href = '/admin'; }}>Admin</button>}</header>
     <div className="chat-body"><div className="welcome"><div className="welcome-icon"><Sparkles size={22} /></div><div><h2>How can I help?</h2><p>Ask a question or choose one of the common questions below.</p></div></div>
-      <div className="messages">{messages.map((message, index) => <div key={index} className={`message-row ${message.role}`}><div className="avatar">{message.role === 'assistant' ? <Bot size={17} /> : <UserRound size={17} />}</div><div className="bubble-wrap">{message.role === 'assistant' && <button className={`read-button${speakingIndex === index ? ' active' : ''}`} onClick={() => readResponse(message.text, index)} aria-label={speakingIndex === index ? 'Stop reading response' : 'Read response aloud'}>{speakingIndex === index ? <Square size={11} /> : <Volume2 size={12} />}<span>{speakingIndex === index ? 'Stop' : 'Read'}</span></button>}<div className="bubble">{message.text}</div></div></div>)}{loading && <div className="message-row assistant"><div className="avatar"><Bot size={17} /></div><div className="bubble typing">Thinking...</div></div>}</div>
+      <div className="messages">{messages.map((message, index) => <div key={index} className={`message-row ${message.role}`}><div className="avatar">{message.role === 'assistant' ? <Bot size={17} /> : <UserRound size={17} />}</div><div className="bubble-wrap">{message.role === 'assistant' && <button className={`read-button${speakingIndex === index ? ' active' : ''}`} onClick={() => readResponse(message.text, index)} aria-label={speakingIndex === index ? 'Stop reading response' : 'Read response aloud'}>{speakingIndex === index ? <Square size={11} /> : <Volume2 size={12} />}<span>{speakingIndex === index ? 'Stop' : 'Read'}</span></button>}<div className={`bubble${message.irrelevant ? " irrelevant-bubble" : ""}`}>{message.text}</div></div></div>)}{loading && <div className="message-row assistant"><div className="avatar"><Bot size={17} /></div><div className="bubble typing">Thinking...</div></div>}</div>
       <div className="suggestions">{suggestions.map(item => <button key={item} onClick={() => sendMessage(item)} disabled={loading}>{item}</button>)}</div>
-      <div className="contact-cta"><span>Need to contact this business?</span><button type="button" onClick={() => { setContactOpen(true); setContactNotice(''); }}>Contact</button></div>
-      {contactOpen && <form className="contact-form" onSubmit={submitContact}>
-        <div className="contact-form-title">Contact this business</div>
-        <input value={contactForm.name} onChange={e => setContactForm({ ...contactForm, name: e.target.value })} placeholder="Name" required />
-        <input type="email" value={contactForm.email} onChange={e => setContactForm({ ...contactForm, email: e.target.value })} placeholder="Email" required />
-        <input value={contactForm.subject} onChange={e => setContactForm({ ...contactForm, subject: e.target.value })} placeholder="Subject" required />
-        <div className="contact-form-actions"><button type="button" className="contact-cancel" onClick={() => setContactOpen(false)}>Cancel</button><button type="submit" disabled={contactSending}>{contactSending ? 'Sending...' : 'Send'}</button></div>
+      {leadOpen && <form className="lead-form" onSubmit={submitLead}>
+        <div className="lead-warning">⚠️ <strong>I can only assist with this business and its services.</strong></div>
+        <div className="lead-form-title">Please leave your details and we will contact you.</div>
+        <input value={leadForm.name} onChange={e => setLeadForm({ ...leadForm, name: e.target.value })} placeholder="Name" required />
+        <input type="email" value={leadForm.email} onChange={e => setLeadForm({ ...leadForm, email: e.target.value })} placeholder="Email" required />
+        <input value={leadForm.subject} onChange={e => setLeadForm({ ...leadForm, subject: e.target.value })} placeholder="Subject" required />
+        <div className="lead-form-actions"><button type="submit" disabled={leadSending}>{leadSending ? 'Sending...' : 'Send Details'}</button></div>
       </form>}
-      {contactNotice && <div className="contact-notice">{contactNotice}</div>}
+      {leadNotice && <div className="lead-notice">{leadNotice}</div>}
     </div>
     <footer className="composer"><button className={`mic-button${listening ? ' listening' : ''}`} onClick={toggleListening} disabled={loading} aria-label={listening ? 'Stop listening' : 'Speak your question'} title={speechSupported ? (listening ? 'Stop listening' : 'Speak') : 'Voice input is not supported'}><Mic size={18} /></button><input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} placeholder={listening ? 'Listening...' : 'Type or speak your question...'} aria-label="Type or speak your question" disabled={loading} /><button className="send-button" onClick={() => sendMessage()} disabled={loading} aria-label="Send message"><Send size={19} /></button></footer>
     <div className="footer-note">Powered by AI • Your conversation is handled securely</div>
