@@ -198,7 +198,7 @@ function EmbedCodePanel() {
   }
 
   return <>
-    <button type="button" onClick={() => setOpen(true)} aria-label="Get chatbot embed code" style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 1000, display: 'inline-flex', alignItems: 'center', gap: 8, border: 0, borderRadius: 12, padding: '12px 16px', background: '#172033', color: '#fff', fontWeight: 700, cursor: 'pointer', boxShadow: '0 10px 30px rgba(0,0,0,.18)' }}><Code2 size={17} /> Embed Chatbot</button>
+    <button type="button" onClick={() => setOpen(true)} aria-label="Get chatbot embed code" style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 1000, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid #c7e3f7', borderRadius: 9, padding: '8px 11px', background: '#eef8ff', color: '#4aa3df', fontWeight: 600, fontSize: 13, cursor: 'pointer', boxShadow: '0 6px 18px rgba(74,163,223,.14)' }}><Code2 size={17} /> Embed Chatbot</button>
     {open && <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(15,23,42,.45)', display: 'grid', placeItems: 'center', padding: 20 }}>
       <section onClick={event => event.stopPropagation()} style={{ width: 'min(680px, 100%)', background: '#fff', borderRadius: 18, padding: 24, boxShadow: '0 24px 80px rgba(0,0,0,.25)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
