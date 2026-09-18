@@ -15,7 +15,7 @@ function ChatbotApp({ embedded = false }) {
   const [messages, setMessages] = useState([{ role: 'assistant', text: 'Hello! I’m your AI customer support assistant. Ask me about our services, prices, opening hours, or bookings.' }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [leadOpen, setLeadOpen] = useState(false); const [leadForm, setLeadForm] = useState({ name: '', email: '', subject: '' }); const [leadSending, setLeadSending] = useState(false); const [leadNotice, setLeadNotice] = useState('');
+  const [leadOpen, setLeadOpen] = useState(false); const [leadForm, setLeadForm] = useState({ name: '', email: '', contact: '', subject: '' }); const [leadSending, setLeadSending] = useState(false); const [leadNotice, setLeadNotice] = useState('');
   const [listening, setListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
   const [speakingIndex, setSpeakingIndex] = useState(null);
@@ -101,7 +101,7 @@ function ChatbotApp({ embedded = false }) {
       let data = {};
       try { data = raw ? JSON.parse(raw) : {}; } catch { data = { error: raw.replace(/<[^>]*>/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 220) || 'The server returned an unexpected response.' }; }
       if (!response.ok) throw new Error(data.error || 'Could not send your details.');
-      setLeadForm({ name: '', email: '', subject: '' });
+      setLeadForm({ name: '', email: '', contact: '', subject: '' });
       setLeadOpen(false);
       setLeadNotice('Thank you. Your details were sent to this business.');
     } catch (error) {
@@ -119,6 +119,7 @@ function ChatbotApp({ embedded = false }) {
         <div className="lead-form-title">Please leave your details and we will contact you.</div>
         <input value={leadForm.name} onChange={e => setLeadForm({ ...leadForm, name: e.target.value })} placeholder="Name" required />
         <input type="email" value={leadForm.email} onChange={e => setLeadForm({ ...leadForm, email: e.target.value })} placeholder="Email" required />
+        <input value={leadForm.contact} onChange={e => setLeadForm({ ...leadForm, contact: e.target.value })} placeholder="Contact / WhatsApp Number" required />
         <input value={leadForm.subject} onChange={e => setLeadForm({ ...leadForm, subject: e.target.value })} placeholder="Subject" required />
         <div className="lead-form-actions"><button type="submit" disabled={leadSending}>{leadSending ? 'Sending...' : 'Send Details'}</button></div>
       </form>}
