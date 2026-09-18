@@ -29,3 +29,24 @@ body { margin:0; min-width:320px; } button,input,textarea { font:inherit; } butt
 
 @media(max-width:1050px){.sidebar{width:210px;flex-basis:210px}.admin-main{padding:24px}.knowledge-grid{grid-template-columns:1fr;max-width:1000px;gap:18px}}
 @media(max-width:640px){.app-shell{padding:0}.chat-card{width:100%;height:100vh;min-height:0;border:0;border-radius:0}.embedded-shell .chat-card{border-radius:20px}.chat-header{padding:16px}.chat-body{padding:20px 16px 14px}.message-row{max-width:92%}.composer{padding-left:12px;padding-right:12px}.admin-layout{display:block}.sidebar{width:100%;padding:12px;border-right:0;border-bottom:1px solid #e4e9f1}.side-brand{padding:4px 6px 12px}.sidebar nav{display:flex;overflow:auto;padding-bottom:4px}.sidebar nav button{flex:0 0 auto}.side-bottom{margin-top:8px;border-top:0;padding-top:0;display:flex}.side-bottom button{flex:1}.admin-main{padding:18px 14px}.topbar{align-items:flex-start;margin-bottom:20px}.topbar h1{font-size:23px}.user-chip{max-width:180px}.stats-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.form-grid label.wide{grid-column:auto}.panel{padding:18px}.knowledge-grid{gap:16px}.knowledge-grid>.panel{padding:18px;border-radius:15px}.knowledge-grid>.panel>h2{font-size:16px}.knowledge-grid>.panel:first-child h2::before,.knowledge-grid>.panel:last-child h2::before{width:25px;height:25px;margin-right:7px}.two-inputs{grid-template-columns:1fr}.data-card{display:block}.row-actions{margin-top:12px}.edit-actions{justify-content:stretch}.edit-actions button{flex:1}.document-item{align-items:flex-start}.document-item button{flex:0 0 auto}}
+
+
+/* Login page only */
+.login-page{padding:32px 20px;background:radial-gradient(circle at 15% 10%,rgba(99,102,241,.10),transparent 34%),radial-gradient(circle at 90% 90%,rgba(14,165,233,.08),transparent 32%),#f6f8fc}
+.login-card{width:min(440px,100%);padding:38px 36px 30px;border:1px solid rgba(224,230,240,.9);border-radius:24px;box-shadow:0 25px 80px rgba(25,38,64,.12)}
+.login-brand{display:flex;align-items:center;gap:11px;margin-bottom:30px;color:#172033;font-size:15px;font-weight:750}
+.login-brand .auth-logo{margin:0;width:44px;height:44px;border-radius:13px}
+.login-heading h1{margin:0 0 8px;font-size:30px;letter-spacing:-.7px;color:#172033}
+.login-heading p{margin:0 0 28px;font-size:14px;color:#69758b}
+.login-card label>span{display:block;margin:0 0 8px;color:#354157;font-size:13px;font-weight:650}
+.login-card input{box-sizing:border-box;margin:0;height:48px;padding:12px 14px;border-radius:12px;background:#fff}
+.login-card label{display:block;margin-bottom:18px}
+.password-field{position:relative}
+.password-field input{padding-right:48px}
+.password-toggle{position:absolute;right:7px;top:7px;width:34px;height:34px;border:0;border-radius:8px;background:transparent;color:#69758b;display:grid;place-items:center;cursor:pointer}
+.password-toggle:hover{background:#f0f3f8;color:#172033}
+.login-submit{width:100%;height:48px;margin-top:3px;border-radius:12px}
+.login-card .error-box{margin-top:16px}
+.login-card .back-link{margin-top:20px;color:#69758b;cursor:pointer}
+.login-card .back-link:hover{color:#172033}
+@media(max-width:520px){.login-card{padding:30px 22px 24px;border-radius:20px}.login-heading h1{font-size:27px}}
