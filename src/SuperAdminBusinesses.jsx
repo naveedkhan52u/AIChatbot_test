@@ -28,12 +28,25 @@ export default function SuperAdminBusinesses() {
 
   useEffect(() => {
     if (!isSuperAdmin) return undefined;
-    const nav = document.querySelector('.sidebar nav');
-    if (!nav) return undefined;
-    const host = document.createElement('div');
-    nav.appendChild(host);
-    setButtonHost(host);
-    return () => host.remove();
+    let host = null;
+    let retryTimer = null;
+    const attach = () => {
+      const nav = document.querySelector('.admin-layout .sidebar nav');
+      if (!nav || host) return;
+      host = document.createElement('div');
+      host.dataset.superAdminBusinesses = 'true';
+      nav.appendChild(host);
+      setButtonHost(host);
+    };
+    attach();
+    if (!host) retryTimer = window.setInterval(attach, 150);
+    const observer = new MutationObserver(attach);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      if (retryTimer) window.clearInterval(retryTimer);
+      observer.disconnect();
+      host?.remove();
+    };
   }, [isSuperAdmin]);
 
   // The main dashboard already contains the Create Business form. This enhancer
@@ -200,12 +213,12 @@ export default function SuperAdminBusinesses() {
     finally { setDeleting(null); }
   }
 
-  if (!buttonHost || !isSuperAdmin) return null;
+  if (!isSuperAdmin) return null;
 
-  const button = createPortal(
+  const button = buttonHost ? createPortal(
     <button type="button" onClick={openBusinesses} className="super-admin-nav-button"><Building2 size={17} /> Businesses</button>,
     buttonHost
-  );
+  ) : null;
 
   const modal = open ? createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(15,23,42,.48)', display: 'grid', placeItems: 'center', padding: 20 }}>
