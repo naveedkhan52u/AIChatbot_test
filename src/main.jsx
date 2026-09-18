@@ -158,7 +158,7 @@ function EmbedCodePanel() {
 }
 
 function RootAdmin() {
-  return <><AdminApp /><SuperAdminBusinesses /><EmbedCodePanel /></>;
+  return <><AdminApp /><EmbedCodePanel /></>;
 }
 
 function RootApp() {
