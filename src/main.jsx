@@ -6,7 +6,6 @@ import AdminApp from './AdminApp';
 import SuperAdminBusinesses from './SuperAdminBusinesses';
 import './styles.css';
 
-const suggestions = ['What services do you provide?', 'What are your opening hours?', 'How can I make a booking?'];
 
 function ChatbotApp({ embedded = false }) {
   const params = new URLSearchParams(window.location.search);
@@ -15,11 +14,38 @@ function ChatbotApp({ embedded = false }) {
   const [messages, setMessages] = useState([{ role: 'assistant', text: 'Hello! I’m your AI customer support assistant. Ask me about our services, prices, opening hours, or bookings.' }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
   const [leadOpen, setLeadOpen] = useState(false); const [leadForm, setLeadForm] = useState({ name: '', email: '', contact: '', subject: '' }); const [leadSending, setLeadSending] = useState(false); const [leadNotice, setLeadNotice] = useState('');
   const [listening, setListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
   const [speakingIndex, setSpeakingIndex] = useState(null);
   const recognitionRef = useRef(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadSuggestions() {
+      try {
+        const query = new URLSearchParams();
+        if (businessId) query.set('businessId', businessId);
+        else if (businessSlug) query.set('businessSlug', businessSlug);
+        else return;
+
+        const response = await fetch(`/api/suggestions?${query.toString()}`, {
+          headers: { Accept: 'application/json' },
+          cache: 'no-store'
+        });
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (mounted) setSuggestions(Array.isArray(data.suggestions) ? data.suggestions.slice(0, 3) : []);
+      } catch (error) {
+        console.error('Unable to load FAQ suggestions:', error);
+      }
+    }
+
+    loadSuggestions();
+    return () => { mounted = false; };
+  }, [businessId, businessSlug]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
