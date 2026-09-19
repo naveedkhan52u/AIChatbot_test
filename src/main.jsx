@@ -135,7 +135,7 @@ function ChatbotApp({ embedded = false }) {
     } finally { setLeadSending(false); }
   }
 
-  return <main className={`app-shell${embedded ? ' embedded-shell' : ''}`}><section className="chat-card">
+  const chatView = <main className="app-shell"><section className="chat-card">
     <header className="chat-header"><div className="brand-icon"><Bot size={24} /></div><div><h1>AI Customer Support</h1><p><span className="status-dot" /> Online assistant</p></div>{!embedded && <button className="admin-link" onClick={() => { window.location.href = '/admin'; }}>Admin</button>}</header>
     <div className="chat-body"><div className="welcome"><div className="welcome-icon"><Sparkles size={22} /></div><div><h2>How can I help?</h2><p>Ask a question or choose one of the common questions below.</p></div></div>
       <div className="messages">{messages.map((message, index) => <div key={index} className={`message-row ${message.role}`}><div className="avatar">{message.role === 'assistant' ? <Bot size={17} /> : <UserRound size={17} />}</div><div className="bubble-wrap">{message.role === 'assistant' && <button className={`read-button${speakingIndex === index ? ' active' : ''}`} onClick={() => readResponse(message.text, index)} aria-label={speakingIndex === index ? 'Stop reading response' : 'Read response aloud'}>{speakingIndex === index ? <Square size={11} /> : <Volume2 size={12} />}<span>{speakingIndex === index ? 'Stop' : 'Read'}</span></button>}<div className={`bubble${message.irrelevant ? " irrelevant-bubble" : ""}`}>{message.text}</div></div></div>)}{loading && <div className="message-row assistant"><div className="avatar"><Bot size={17} /></div><div className="bubble typing">Thinking...</div></div>}</div>
@@ -154,6 +154,44 @@ function ChatbotApp({ embedded = false }) {
     <footer className="composer"><button className={`mic-button${listening ? ' listening' : ''}`} onClick={toggleListening} disabled={loading} aria-label={listening ? 'Stop listening' : 'Speak your question'} title={speechSupported ? (listening ? 'Stop listening' : 'Speak') : 'Voice input is not supported'}><Mic size={18} /></button><input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} placeholder={listening ? 'Listening...' : 'Type or speak your question...'} aria-label="Type or speak your question" disabled={loading} /><button className="send-button" onClick={() => sendMessage()} disabled={loading} aria-label="Send message"><Send size={19} /></button></footer>
     <div className="footer-note">Powered by AI • Your conversation is handled securely</div>
   </section></main>;
+  if (embedded) return <main className="app-shell embedded-shell"><section className="chat-card">{chatView.props.children}</section></main>;
+  return <PlatformHome>{chatView}</PlatformHome>;
+}
+
+function PlatformHome({ children }) {
+  return <div className="platform-page">
+    <nav className="platform-nav">
+      <div className="platform-brand"><div className="platform-brand-icon"><Bot size={20} /></div><span>AI Chatbot Platform</span></div>
+      <div className="platform-nav-links"><a href="#features">Features</a><a href="#how-it-works">How It Works</a><a href="#pricing">Pricing</a><a href="/admin" className="platform-signin">Sign In</a></div>
+    </nav>
+    <section className="platform-hero">
+      <div className="platform-hero-copy">
+        <span className="platform-eyebrow"><Sparkles size={14} /> AI-powered customer support</span>
+        <h1>Turn your website into an <span>AI-powered support desk.</span></h1>
+        <p>Build a smart AI chatbot for your business, connect your knowledge, answer customer questions, and capture leads automatically.</p>
+        <div className="platform-hero-actions"><a href="/admin" className="platform-primary">Create Your AI Chatbot</a><a href="#features" className="platform-secondary">Explore Features</a></div>
+        <div className="platform-trust"><span>✓ Business-specific AI</span><span>✓ Easy website integration</span><span>✓ Lead capture</span></div>
+      </div>
+      <div className="platform-hero-orbit"><div className="orbit-card orbit-card-top"><Bot size={17} /><span>AI Assistant</span><strong>Always ready</strong></div><div className="orbit-card orbit-card-bottom"><MessageCircleIcon /><span>Customer support</span><strong>24 / 7</strong></div></div>
+    </section>
+    <section id="features" className="platform-features">
+      <div className="platform-section-heading"><span>BUILT FOR MODERN BUSINESSES</span><h2>Everything your AI support platform needs</h2><p>Give customers instant answers while keeping control of your business knowledge and leads.</p></div>
+      <div className="platform-feature-grid">
+        <div className="platform-feature"><div>✦</div><h3>AI Customer Support</h3><p>Answer questions using your own services, policies, FAQs, and business information.</p></div>
+        <div className="platform-feature"><div>⌁</div><h3>Business Knowledge</h3><p>Connect documents and custom knowledge so the assistant stays focused on your business.</p></div>
+        <div className="platform-feature"><div>↗</div><h3>Lead Generation</h3><p>Capture customer contact requests when the assistant cannot answer a question.</p></div>
+        <div className="platform-feature"><div>⌘</div><h3>Easy Integration</h3><p>Embed your chatbot on almost any website with a simple code snippet.</p></div>
+      </div>
+    </section>
+    <section id="how-it-works" className="platform-how"><div><span>HOW IT WORKS</span><h2>Connect. Configure. Launch.</h2></div><div className="platform-steps"><div><b>01</b><strong>Create your business</strong><p>Set up your business profile and support details.</p></div><div><b>02</b><strong>Train your AI</strong><p>Add FAQs, services, policies, and documents.</p></div><div><b>03</b><strong>Embed and serve</strong><p>Place the chatbot on your website and start helping customers.</p></div></div></section>
+    <section id="pricing" className="platform-pricing"><span>SIMPLE PLATFORM</span><h2>One place for AI-powered customer support</h2><p>Manage your AI assistant, business knowledge, customer leads, and website integration from one secure dashboard.</p><a href="/admin" className="platform-primary">Get Started</a></section>
+    {children}
+    <footer className="platform-footer"><span>AI Chatbot Platform</span><span>AI-powered support for modern businesses</span></footer>
+  </div>;
+}
+
+function MessageCircleIcon() {
+  return <span className="platform-message-icon">◌</span>;
 }
 
 function EmbedCodePanel() {
