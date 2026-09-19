@@ -136,3 +136,23 @@ body { margin:0; min-width:320px; } button,input,textarea { font:inherit; } butt
     margin:0 auto;
   }
 }
+
+/* Compact chatbot preview typography */
+.platform-chat-frame .chat-card .chat-header h1{font-size:15px!important;}
+.platform-chat-frame .chat-card .chat-header p{font-size:9px!important;}
+.platform-chat-frame .chat-card .chat-header .brand-icon{width:30px!important;height:30px!important;}
+.platform-chat-frame .chat-card .chat-header .brand-icon svg{width:16px!important;height:16px!important;}
+.platform-chat-frame .chat-card .welcome h2{font-size:13px!important;}
+.platform-chat-frame .chat-card .welcome p{font-size:9px!important;}
+.platform-chat-frame .chat-card .welcome-icon{width:30px!important;height:30px!important;}
+.platform-chat-frame .chat-card .welcome-icon svg{width:15px!important;height:15px!important;}
+.platform-chat-frame .chat-card .bubble{font-size:10px!important;line-height:1.45!important;}
+.platform-chat-frame .chat-card .avatar{width:24px!important;height:24px!important;}
+.platform-chat-frame .chat-card .avatar svg{width:13px!important;height:13px!important;}
+.platform-chat-frame .chat-card .read-button{font-size:8px!important;padding:3px 5px!important;}
+.platform-chat-frame .chat-card .read-button svg{width:9px!important;height:9px!important;}
+.platform-chat-frame .chat-card .suggestions button{font-size:9px!important;padding:6px 8px!important;}
+.platform-chat-frame .chat-card .composer input{font-size:10px!important;}
+.platform-chat-frame .chat-card .composer button{width:30px!important;height:30px!important;}
+.platform-chat-frame .chat-card .composer button svg{width:14px!important;height:14px!important;}
+.platform-chat-frame .chat-card .footer-note{font-size:7px!important;}
