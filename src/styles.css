@@ -104,3 +104,35 @@ body { margin:0; min-width:320px; } button,input,textarea { font:inherit; } butt
 /* Latest requested overrides */
 .platform-chat-demo{position:absolute;}
 .platform-hero h1{font-size:14px;letter-spacing:0;}
+
+/* Chatbot preview sizing and spacing */
+.platform-chat-demo{
+  width:360px;
+  max-width:360px;
+  right:40px;
+  top:70px;
+  margin-right:20px;
+}
+.platform-chat-frame{
+  height:470px;
+}
+.platform-chat-frame .app-shell{
+  min-height:470px!important;
+  height:470px!important;
+}
+.platform-chat-frame .chat-card{
+  height:470px!important;
+}
+.chat-card .admin-link{
+  display:none!important;
+}
+@media(max-width:900px){
+  .platform-chat-demo{
+    position:relative;
+    top:auto;
+    right:auto;
+    width:min(360px,100%);
+    max-width:360px;
+    margin:0 auto;
+  }
+}
