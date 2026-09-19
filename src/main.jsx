@@ -164,28 +164,61 @@ function PlatformHome({ children }) {
       <div className="platform-brand"><div className="platform-brand-icon"><Bot size={20} /></div><span>AI Chatbot Platform</span></div>
       <div className="platform-nav-links"><a href="#features">Features</a><a href="#how-it-works">How It Works</a><a href="#pricing">Pricing</a><a href="/admin" className="platform-signin">Sign In</a></div>
     </nav>
+
     <section className="platform-hero">
       <div className="platform-hero-copy">
-        <span className="platform-eyebrow"><Sparkles size={14} /> AI-powered customer support</span>
-        <h1>Turn your website into an <span>AI-powered support desk.</span></h1>
-        <p>Build a smart AI chatbot for your business, connect your knowledge, answer customer questions, and capture leads automatically.</p>
-        <div className="platform-hero-actions"><a href="/admin" className="platform-primary">Create Your AI Chatbot</a><a href="#features" className="platform-secondary">Explore Features</a></div>
-        <div className="platform-trust"><span>✓ Business-specific AI</span><span>✓ Easy website integration</span><span>✓ Lead capture</span></div>
+        <span className="platform-eyebrow"><Sparkles size={14} /> AI-powered customer support platform</span>
+        <h1>Give your business a <span>24/7 AI support assistant.</span></h1>
+        <p>Build, train, and launch a business-specific AI chatbot that answers customers, captures leads, and works directly on your website or online store.</p>
+        <div className="platform-benefit-list">
+          <div><strong>Professional Admin Dashboard</strong><span>Manage AI settings, services, FAQs, knowledge, leads, and website integration from one place.</span></div>
+          <div><strong>Easy Business Setup</strong><span>Upload business details, services, prices, policies, FAQs, and documents so your AI understands the specific business.</span></div>
+          <div><strong>Business-Specific AI Chatbot</strong><span>Each owner gets an AI assistant focused on their own business information and customer questions.</span></div>
+          <div><strong>Lead Generation & Easy Integration</strong><span>Capture customer contact requests and add the chatbot to a website or online store with simple embed code.</span></div>
+          <div><strong>24/7 Customer Service</strong><span>Help customers get answers around the clock while giving owners a simple way to manage their AI assistant.</span></div>
+        </div>
+        <div className="platform-hero-actions"><a href="/admin" className="platform-primary">Create Your AI Chatbot</a><a href="#pricing" className="platform-secondary">View Pricing</a></div>
       </div>
-      <div className="platform-hero-orbit"><div className="orbit-card orbit-card-top"><Bot size={17} /><span>AI Assistant</span><strong>Always ready</strong></div><div className="orbit-card orbit-card-bottom"><MessageCircleIcon /><span>Customer support</span><strong>24 / 7</strong></div></div>
+      <div className="platform-chat-demo">
+        <div className="platform-demo-label"><span className="demo-live-dot"></span> Live AI chatbot preview</div>
+        <div className="platform-chat-frame">{children}</div>
+      </div>
     </section>
+
     <section id="features" className="platform-features">
-      <div className="platform-section-heading"><span>BUILT FOR MODERN BUSINESSES</span><h2>Everything your AI support platform needs</h2><p>Give customers instant answers while keeping control of your business knowledge and leads.</p></div>
+      <div className="platform-section-heading"><span>WHY BUSINESSES USE IT</span><h2>Everything needed to run AI customer support</h2><p>A practical platform for businesses that want automated customer service without building an AI system from scratch.</p></div>
       <div className="platform-feature-grid">
-        <div className="platform-feature"><div>✦</div><h3>AI Customer Support</h3><p>Answer questions using your own services, policies, FAQs, and business information.</p></div>
-        <div className="platform-feature"><div>⌁</div><h3>Business Knowledge</h3><p>Connect documents and custom knowledge so the assistant stays focused on your business.</p></div>
-        <div className="platform-feature"><div>↗</div><h3>Lead Generation</h3><p>Capture customer contact requests when the assistant cannot answer a question.</p></div>
-        <div className="platform-feature"><div>⌘</div><h3>Easy Integration</h3><p>Embed your chatbot on almost any website with a simple code snippet.</p></div>
+        <div className="platform-feature"><div>01</div><h3>Dedicated Business AI</h3><p>Every business can have its own assistant trained around its services, FAQs, policies, and information.</p><ul><li>Business-specific answers</li><li>Controlled knowledge</li><li>Customer-focused conversations</li></ul></div>
+        <div className="platform-feature"><div>02</div><h3>Simple Admin Dashboard</h3><p>Owners manage their chatbot without complicated technical tools.</p><ul><li>Update business details</li><li>Add services and FAQs</li><li>Manage leads and settings</li></ul></div>
+        <div className="platform-feature"><div>03</div><h3>Lead Generation</h3><p>Turn unanswered customer questions into useful contact requests.</p><ul><li>Name and email collection</li><li>Contact / WhatsApp details</li><li>Subject and request tracking</li></ul></div>
+        <div className="platform-feature"><div>04</div><h3>Easy Website Setup</h3><p>Connect the chatbot to a website or online store using a simple embed code.</p><ul><li>Quick installation</li><li>Website-ready chatbot</li><li>No custom AI development required</li></ul></div>
       </div>
     </section>
-    <section id="how-it-works" className="platform-how"><div><span>HOW IT WORKS</span><h2>Connect. Configure. Launch.</h2></div><div className="platform-steps"><div><b>01</b><strong>Create your business</strong><p>Set up your business profile and support details.</p></div><div><b>02</b><strong>Train your AI</strong><p>Add FAQs, services, policies, and documents.</p></div><div><b>03</b><strong>Embed and serve</strong><p>Place the chatbot on your website and start helping customers.</p></div></div></section>
-    <section id="pricing" className="platform-pricing"><span>SIMPLE PLATFORM</span><h2>One place for AI-powered customer support</h2><p>Manage your AI assistant, business knowledge, customer leads, and website integration from one secure dashboard.</p><a href="/admin" className="platform-primary">Get Started</a></section>
-    {children}
+
+    <section id="how-it-works" className="platform-how">
+      <div><span>HOW IT WORKS</span><h2>Set up your AI assistant in three steps.</h2><p>Everything is organized around the information your customers actually need.</p></div>
+      <div className="platform-steps">
+        <div><b>01</b><strong>Add your business</strong><p>Enter your business profile, contact details, services, prices, and operating information.</p></div>
+        <div><b>02</b><strong>Teach your AI</strong><p>Add FAQs, knowledge documents, policies, and other business information.</p></div>
+        <div><b>03</b><strong>Embed and serve</strong><p>Copy your unique chatbot code, add it to your website or store, and start helping customers.</p></div>
+      </div>
+    </section>
+
+    <section id="pricing" className="platform-pricing">
+      <div className="platform-section-heading"><span>SIMPLE PRICING</span><h2>Choose how you want to use the platform</h2><p>Clear pricing for businesses that want an AI customer support assistant.</p></div>
+      <div className="pricing-grid">
+        <div className="pricing-card"><span className="pricing-period">MONTHLY</span><strong>$19</strong><small>per month</small><ul><li>AI chatbot platform access</li><li>Business admin dashboard</li><li>Knowledge and FAQ management</li><li>Lead generation tools</li><li>Website integration</li></ul><a href="/admin" className="platform-secondary">Get Started</a></div>
+        <div className="pricing-card pricing-card-featured"><span className="pricing-period">YEARLY</span><strong>$250</strong><small>per year</small><ul><li>AI chatbot platform access</li><li>Business admin dashboard</li><li>Knowledge and FAQ management</li><li>Lead generation tools</li><li>Website integration</li></ul><a href="/admin" className="platform-primary">Get Started</a></div>
+        <div className="pricing-card"><span className="pricing-period">ONE-TIME</span><strong>$805</strong><small>one-time payment</small><ul><li>AI chatbot platform access</li><li>Business admin dashboard</li><li>Knowledge and FAQ management</li><li>Lead generation tools</li><li>Website integration</li></ul><a href="/admin" className="platform-secondary">Get Started</a></div>
+      </div>
+    </section>
+
+    <section className="platform-support">
+      <div className="support-icon"><Bot size={24} /></div>
+      <div><span>24/7 CUSTOMER SUPPORT</span><h2>Help is available when your business needs it.</h2><p>Customers can receive AI assistance around the clock, while business owners have a platform designed to make chatbot setup and management simple.</p></div>
+      <a href="/admin" className="platform-primary">Start Building</a>
+    </section>
+
     <footer className="platform-footer"><span>AI Chatbot Platform</span><span>AI-powered support for modern businesses</span></footer>
   </div>;
 }
