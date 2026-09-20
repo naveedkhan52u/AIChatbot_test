@@ -10,21 +10,25 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed.' });
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return json(res, 500, { error: 'Server configuration is incomplete.' });
   try {
-    const { name, email, contact, subject, businessId, businessSlug } = req.body || {};
+    const { name, email, contact, subject, businessId, businessSlug, platformLead } = req.body || {};
     const customerName = clean(name, 120);
     const customerEmail = clean(email, 254).toLowerCase();
     const customerContact = clean(contact, 100);
     const customerSubject = clean(subject, 200);
-    if (!customerName || !customerEmail || !customerContact || !customerSubject) return json(res, 400, { error: 'Name, email, contact, and subject are required.' });
+    if (!customerName || !customerEmail || !customerSubject) return json(res, 400, { error: 'Name, email, and subject are required.' });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) return json(res, 400, { error: 'Please enter a valid email address.' });
 
-    let query = supabase.from('businesses').select('id').eq('status','active');
-    if (typeof businessId === 'string' && businessId.trim()) query = query.eq('id', businessId.trim());
-    else query = query.eq('slug', typeof businessSlug === 'string' && businessSlug.trim() ? businessSlug.trim() : BUSINESS_SLUG);
-    const { data: business, error: businessError } = await query.single();
-    if (businessError || !business) return json(res, 404, { error: 'Business is not available.' });
+    let businessIdValue = null;
+    if (!platformLead) {
+      let query = supabase.from('businesses').select('id').eq('status','active');
+      if (typeof businessId === 'string' && businessId.trim()) query = query.eq('id', businessId.trim());
+      else query = query.eq('slug', typeof businessSlug === 'string' && businessSlug.trim() ? businessSlug.trim() : BUSINESS_SLUG);
+      const { data: business, error: businessError } = await query.single();
+      if (businessError || !business) return json(res, 404, { error: 'Business is not available.' });
+      businessIdValue = business.id;
+    }
 
-    const { error } = await supabase.from('leads').insert({ business_id: business.id, name: customerName, email: customerEmail, contact: customerContact, subject: customerSubject, source: 'chatbot', status: 'new' });
+    const { error } = await supabase.from('leads').insert({ business_id: businessIdValue, name: customerName, email: customerEmail, contact: customerContact || null, subject: customerSubject, source: platformLead ? 'platform_contact' : 'chatbot', status: 'new' });
     if (error) { console.error('Lead insert error:', error); return json(res, 500, { error: 'Could not send your contact request.' }); }
     return json(res, 200, { success: true });
   } catch (error) { console.error('Contact lead API error:', error); return json(res, 500, { error: 'Could not send your contact request.' }); }
