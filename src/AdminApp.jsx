@@ -60,7 +60,49 @@ function AdminDashboard({ session, onSignOut }) {
   const [counts, setCounts] = useState({ services: 0, faqs: 0, conversations: 0, leads: 0 }); const [showAllDocuments, setShowAllDocuments] = useState(false); const [section, setSection] = useState('overview'); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [uploading, setUploading] = useState(false); const [notice, setNotice] = useState(''); const [error, setError] = useState(''); const fileInputRef = useRef(null); const supabase = getSupabase();
   const isSuperAdmin = session.user.id === SUPER_ADMIN_USER_ID;
   useEffect(() => { loadAdmin(); }, []);
-  async function loadAdmin() { setLoading(true); setError(''); try { const { data: membership, error: membershipError } = await supabase.from('business_admins').select('business_id, role').eq('user_id', session.user.id).maybeSingle(); if (membershipError) throw membershipError; if (!membership?.business_id) throw new Error('Your account is not assigned to a business yet.'); setBusinessId(membership.business_id); const [businessResult, services, faqs, conversations, leads, infoResult, docsResult] = await Promise.all([supabase.from('businesses').select('id,name,description,phone,email,website,address,city').eq('id', membership.business_id).single(), supabase.from('services').select('id', { count: 'exact', head: true }).eq('business_id', membership.business_id), supabase.from('faqs').select('id', { count: 'exact', head: true }).eq('business_id', membership.business_id), supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('business_id', membership.business_id), supabase.from('leads').select('id', { count: 'exact', head: true }).eq('business_id', membership.business_id), supabase.from('business_info').select('key,value').eq('business_id', membership.business_id), supabase.from('knowledge_documents').select('id,title,file_name,file_type,storage_path,status,created_at').eq('business_id', membership.business_id).order('created_at', { ascending: false })]); if (businessResult.error) throw businessResult.error; for (const result of [services, faqs, conversations, leads, infoResult, docsResult]) if (result.error) throw result.error; setBusiness(businessResult.data || emptyBusiness); setCounts({ services: services.count || 0, faqs: faqs.count || 0, conversations: conversations.count || 0, leads: leads.count || 0 }); const info = Object.fromEntries((infoResult.data || []).map(row => [row.key, row.value])); setKnowledge({ opening_hours: info.opening_hours || '', booking_policy: info.booking_policy || '', cancellation_policy: info.cancellation_policy || '', payment_methods: info.payment_methods || '', support_policy: info.support_policy || '' }); setCustomText(info.custom_knowledge || ''); setDocuments(docsResult.data || []); } catch (err) { setError(err.message || 'Could not load the admin dashboard.'); } finally { setLoading(false); } }
+  async function loadAdmin() {
+    setLoading(true); setError('');
+    try {
+      if (isSuperAdmin) {
+        setBusinessId(null);
+        const [services, faqs, conversations, leads] = await Promise.all([
+          supabase.from('services').select('id', { count: 'exact', head: true }),
+          supabase.from('faqs').select('id', { count: 'exact', head: true }),
+          supabase.from('conversations').select('id', { count: 'exact', head: true }),
+          supabase.from('leads').select('id', { count: 'exact', head: true }).is('business_id', null)
+        ]);
+        const failed = [services, faqs, conversations, leads].find(result => result.error);
+        if (failed?.error) throw failed.error;
+        setBusiness(emptyBusiness);
+        setCounts({ services: services.count || 0, faqs: faqs.count || 0, conversations: conversations.count || 0, leads: leads.count || 0 });
+        setKnowledge(emptyKnowledge); setCustomText(''); setDocuments([]);
+        return;
+      }
+      const { data: membership, error: membershipError } = await supabase.from('business_admins').select('business_id, role').eq('user_id', session.user.id).maybeSingle();
+      if (membershipError) throw membershipError;
+      if (!membership?.business_id) throw new Error('Your account is not assigned to a business yet.');
+      setBusinessId(membership.business_id);
+      const [businessResult, services, faqs, conversations, leads, infoResult, docsResult] = await Promise.all([
+        supabase.from('businesses').select('id,name,description,phone,email,website,address,city').eq('id', membership.business_id).single(),
+        supabase.from('services').select('id', { count: 'exact', head: true }).eq('business_id', membership.business_id),
+        supabase.from('faqs').select('id', { count: 'exact', head: true }).eq('business_id', membership.business_id),
+        supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('business_id', membership.business_id),
+        supabase.from('leads').select('id', { count: 'exact', head: true }).eq('business_id', membership.business_id),
+        supabase.from('business_info').select('key,value').eq('business_id', membership.business_id),
+        supabase.from('knowledge_documents').select('id,title,file_name,file_type,storage_path,status,created_at').eq('business_id', membership.business_id).order('created_at', { ascending: false })
+      ]);
+      if (businessResult.error) throw businessResult.error;
+      for (const result of [services, faqs, conversations, leads, infoResult, docsResult]) if (result.error) throw result.error;
+      setBusiness(businessResult.data || emptyBusiness);
+      setCounts({ services: services.count || 0, faqs: faqs.count || 0, conversations: conversations.count || 0, leads: leads.count || 0 });
+      const info = Object.fromEntries((infoResult.data || []).map(row => [row.key, row.value]));
+      setKnowledge({ opening_hours: info.opening_hours || '', booking_policy: info.booking_policy || '', cancellation_policy: info.cancellation_policy || '', payment_methods: info.payment_methods || '', support_policy: info.support_policy || '' });
+      setCustomText(info.custom_knowledge || ''); setDocuments(docsResult.data || []);
+    } catch (err) {
+      console.error('Admin dashboard load failed:', err);
+      setError(err.message || 'Could not load the admin dashboard.');
+    } finally { setLoading(false); }
+  }
   async function saveBusiness(event) { event.preventDefault(); if (!businessId || saving) return; setSaving(true); setNotice(''); setError(''); try { const payload = { name: (business.name || '').trim(), description: business.description || '', phone: business.phone || '', email: business.email || '', website: business.website || '', address: business.address || '', city: business.city || '' }; if (!payload.name) throw new Error('Business name is required.'); const { data, error } = await supabase.from('businesses').update(payload).eq('id', businessId).select('id,name,description,phone,email,website,address,city').single(); if (error) throw error; if (!data) throw new Error('No business record was updated.'); setBusiness(data); setNotice('✓ Business profile saved successfully.'); } catch (err) { setError(`Profile could not be saved: ${err.message || 'Unknown error'}`); } finally { setSaving(false); } }
   async function saveKnowledge(event) { event.preventDefault(); if (!businessId || saving) return; setSaving(true); setNotice(''); setError(''); try { const rows = [...Object.entries(knowledge), ['custom_knowledge', customText]].map(([key, value]) => ({ business_id: businessId, key, value: value || '' })); const { error } = await supabase.from('business_info').upsert(rows, { onConflict: 'business_id,key' }); if (error) throw error; setNotice('✓ Knowledge saved successfully. The chatbot can now use this information.'); } catch (err) { setError(`Knowledge could not be saved: ${err.message || 'Unknown error'}`); } finally { setSaving(false); } }
   function chooseFile() { setError(''); setNotice(''); fileInputRef.current?.click(); }
