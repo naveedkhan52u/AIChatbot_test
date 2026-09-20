@@ -214,9 +214,25 @@ function PlatformHome({ children }) {
     </section>
 
     <section className="platform-support">
-      <div className="support-icon"><Bot size={24} /></div>
-      <div><span>24/7 CUSTOMER SUPPORT</span><h2>Help is available when your business needs it.</h2><p>Customers can receive AI assistance around the clock, while business owners have a platform designed to make chatbot setup and management simple.</p></div>
-      <a href="/admin" className="platform-primary">Start Building</a>
+      <div className="platform-support-copy"><div className="support-icon"><Bot size={24} /></div><div><span>24/7 CUSTOMER SUPPORT</span><h2>Need help setting up your AI chatbot?</h2><p>Send us your details and our team can help you get your business AI assistant ready for your website or online store.</p></div></div>
+      <form className="platform-contact-form" onSubmit={async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const button = form.querySelector('button[type="submit"]');
+        const status = form.querySelector('.platform-form-status');
+        button.disabled = true; button.textContent = 'Sending...'; status.textContent = '';
+        const data = new FormData(form);
+        try {
+          const response = await fetch('/api/contact-lead', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ name: data.get('name'), email: data.get('email'), contact: data.get('contact'), subject: data.get('subject'), platformLead: true }) });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'Could not send your request.');
+          form.reset(); status.textContent = 'Thanks. Your request has been submitted successfully.';
+        } catch (error) { status.textContent = error.message || 'Could not send your request.'; }
+        finally { button.disabled = false; button.textContent = 'Submit Request'; }
+      }}>
+        <div className="platform-form-grid"><label><span>Name *</span><input name="name" required placeholder="Your name" /></label><label><span>Email *</span><input name="email" type="email" required placeholder="you@example.com" /></label><label><span>WhatsApp Number <small>(optional)</small></span><input name="contact" placeholder="+92 300 0000000" /></label><label><span>Subject *</span><input name="subject" required placeholder="How can we help?" /></label></div>
+        <button className="platform-primary" type="submit">Submit Request</button><div className="platform-form-status" role="status"></div>
+      </form>
     </section>
 
     <footer className="platform-footer"><span>AI Chatbot Platform</span><span>AI-powered support for modern businesses</span></footer>
