@@ -156,3 +156,9 @@ body { margin:0; min-width:320px; } button,input,textarea { font:inherit; } butt
 .platform-chat-frame .chat-card .composer button{width:30px!important;height:30px!important;}
 .platform-chat-frame .chat-card .composer button svg{width:14px!important;height:14px!important;}
 .platform-chat-frame .chat-card .footer-note{font-size:7px!important;}
+
+/* Platform support contact form */
+.platform-support{display:block!important;padding:30px!important}
+.platform-support-copy{display:flex;align-items:center;gap:18px;margin-bottom:24px}.platform-support-copy>div:last-child{flex:1}.platform-support-copy h2{margin:5px 0 6px;font-size:22px}.platform-support-copy p{margin:0;max-width:760px;color:#718096;font-size:12px;line-height:1.6}
+.platform-contact-form{border-top:1px solid #e5edf4;padding-top:22px}.platform-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.platform-contact-form label{display:grid;gap:7px}.platform-contact-form label span{font-size:11px;font-weight:700;color:#39465a}.platform-contact-form label small{font-weight:500;color:#8a95a7}.platform-contact-form input{width:100%;box-sizing:border-box;border:1px solid #dbe5ee;border-radius:9px;background:#fbfdff;padding:11px 12px;font:inherit;font-size:12px;color:#172033;outline:none}.platform-contact-form input:focus{border-color:#8bc7e9;box-shadow:0 0 0 3px rgba(74,163,223,.10)}.platform-contact-form>button{margin-top:16px}.platform-form-status{display:inline-block;margin-left:12px;font-size:11px;color:#4f7c62}
+@media(max-width:640px){.platform-support{padding:22px!important}.platform-support-copy{align-items:flex-start}.platform-form-grid{grid-template-columns:1fr}.platform-contact-form>button{width:100%}.platform-form-status{display:block;margin:10px 0 0}}
