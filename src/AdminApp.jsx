@@ -92,10 +92,15 @@ function LeadsSection({ businessId, onDelete, isSuperAdmin }) {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      let query = supabase.from('leads').select('id,business_id,name,email,contact,subject,source,created_at,businesses(name)').order('created_at', { ascending: false });
+      let query = supabase.from('leads').select('id,business_id,name,email,contact,subject,source,created_at').order('created_at', { ascending: false });
       query = isSuperAdmin ? query.is('business_id', null) : query.eq('business_id', businessId);
-      const { data } = await query;
-      setRows(data || []);
+      const { data, error } = await query;
+      if (error) {
+        console.error('Lead load error:', error);
+        setRows([]);
+      } else {
+        setRows(data || []);
+      }
       setLoading(false);
     })();
   }, [businessId, isSuperAdmin]);
