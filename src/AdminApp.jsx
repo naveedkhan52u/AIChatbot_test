@@ -87,6 +87,7 @@ function AdminDashboard({ session, onSignOut }) {
           setCustomText(info.custom_knowledge || ''); setDocuments(docsResult.data || []);
           setCounts({ services: services.count || 0, faqs: faqs.count || 0, conversations: conversations.count || 0, leads: leads.count || 0 });
         }
+        return;
         /*
         const [services, faqs, conversations, leads] = await Promise.all([
           supabase.from('services').select('id', { count: 'exact', head: true }),
