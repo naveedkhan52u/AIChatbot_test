@@ -52,19 +52,42 @@ function Login({ onLoggedIn }) {
 function CreateBusiness({ session, onDone }) {
   const [form, setForm] = useState(emptyCreateBusiness); const [saving, setSaving] = useState(false); const [error, setError] = useState(''); const [notice, setNotice] = useState('');
   async function submit(event) { event.preventDefault(); setSaving(true); setError(''); setNotice(''); try { const { data: sessionData } = await getSupabase().auth.getSession(); const accessToken = sessionData.session?.access_token || session.access_token; const response = await fetch('/api/admin-create-business', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` }, body: JSON.stringify(form) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Could not create business.'); setForm(emptyCreateBusiness); setNotice(`✓ ${data.business.name} created. An invitation was sent to ${data.business.clientEmail}.`); if (onDone) onDone(); } catch (err) { setError(err.message || 'Could not create business.'); } finally { setSaving(false); } }
-  return <div className="super-admin-page"><div className="panel super-admin-card"><div className="section-heading"><div><h2><ShieldCheck size={19} /> Create Business + Invite Client</h2><p className="muted">Create a separate business workspace and send the client their own Supabase invitation.</p></div></div>{error && <div className="error-box">{error}</div>}{notice && <div className="save-note">{notice}</div>}<form className="form-panel" onSubmit={submit}><div className="form-grid"><label><span>Business name *</span><input value={form.businessName} onChange={e => setForm({ ...form, businessName: e.target.value })} required /></label><label><span>Client name</span><input value={form.clientName} onChange={e => setForm({ ...form, clientName: e.target.value })} /></label><label><span>Client email *</span><input type="email" value={form.clientEmail} onChange={e => setForm({ ...form, clientEmail: e.target.value })} required /></label><label><span>Phone</span><input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></label><label><span>City</span><input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} /></label><label className="wide"><span>Description</span><textarea rows="4" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></label></div><div className="edit-actions"><button type="button" className="secondary-btn" onClick={() => { setForm(emptyCreateBusiness); setError(''); setNotice(''); }}>Clear</button><button className="primary-btn" type="submit" disabled={saving}><Plus size={16} />{saving ? 'Creating & inviting...' : 'Create Business + Invite Client'}</button></div></form></div></div>;
+  return <div className="super-admin-page"><div className="panel super-admin-card"><div className="section-heading"><div><h2><ShieldCheck size={19} /> Create Business + Invite Client</h2><p className="muted">Create a separate business workspace and send the client their own Supabase invitation.</p></div></div>{error && <div className="error-box">{error}</div>}{notice && <div className="save-note">{notice}</div>}<form className="form-panel" onSubmit={submit}><div className="form-grid">{isSuperAdmin && section === 'business' && <label className="wide super-admin-business-selector"><span>Select business to manage</span><select value={businessId || ''} onChange={async e => { const id=e.target.value; setBusinessId(id); if(!id)return; const {data,error}=await supabase.from('businesses').select('id,name,description,phone,email,website,address,city').eq('id',id).single(); if(!error&&data)setBusiness(data); }}><option value="">Select a business</option>{availableBusinesses.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}<label><span>Business name *</span><input value={form.businessName} onChange={e => setForm({ ...form, businessName: e.target.value })} required /></label><label><span>Client name</span><input value={form.clientName} onChange={e => setForm({ ...form, clientName: e.target.value })} /></label><label><span>Client email *</span><input type="email" value={form.clientEmail} onChange={e => setForm({ ...form, clientEmail: e.target.value })} required /></label><label><span>Phone</span><input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></label><label><span>City</span><input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} /></label><label className="wide"><span>Description</span><textarea rows="4" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></label></div><div className="edit-actions"><button type="button" className="secondary-btn" onClick={() => { setForm(emptyCreateBusiness); setError(''); setNotice(''); }}>Clear</button><button className="primary-btn" type="submit" disabled={saving}><Plus size={16} />{saving ? 'Creating & inviting...' : 'Create Business + Invite Client'}</button></div></form></div></div>;
 }
 
 function AdminDashboard({ session, onSignOut }) {
   const [businessId, setBusinessId] = useState(null); const [business, setBusiness] = useState(emptyBusiness); const [knowledge, setKnowledge] = useState(emptyKnowledge); const [documents, setDocuments] = useState([]); const [customText, setCustomText] = useState('');
-  const [counts, setCounts] = useState({ services: 0, faqs: 0, conversations: 0, leads: 0 }); const [showAllDocuments, setShowAllDocuments] = useState(false); const [section, setSection] = useState('overview'); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [uploading, setUploading] = useState(false); const [notice, setNotice] = useState(''); const [error, setError] = useState(''); const fileInputRef = useRef(null); const supabase = getSupabase();
+  const [counts, setCounts] = useState({ services: 0, faqs: 0, conversations: 0, leads: 0 }); const [availableBusinesses, setAvailableBusinesses] = useState([]); const [showAllDocuments, setShowAllDocuments] = useState(false); const [section, setSection] = useState('overview'); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [uploading, setUploading] = useState(false); const [notice, setNotice] = useState(''); const [error, setError] = useState(''); const fileInputRef = useRef(null); const supabase = getSupabase();
   const isSuperAdmin = session.user.id === SUPER_ADMIN_USER_ID;
   useEffect(() => { loadAdmin(); }, []);
   async function loadAdmin() {
     setLoading(true); setError('');
     try {
       if (isSuperAdmin) {
-        setBusinessId(null);
+        const { data: businessList, error: businessListError } = await supabase.from('businesses').select('id,name').order('name');
+        if (businessListError) throw businessListError;
+        setAvailableBusinesses(businessList || []);
+        const selectedId = businessId || businessList?.[0]?.id || null;
+        setBusinessId(selectedId);
+        if (selectedId) {
+          const [businessResult, infoResult, docsResult, services, faqs, conversations, leads] = await Promise.all([
+            supabase.from('businesses').select('id,name,description,phone,email,website,address,city').eq('id', selectedId).single(),
+            supabase.from('business_info').select('key,value').eq('business_id', selectedId),
+            supabase.from('knowledge_documents').select('id,title,file_name,file_type,storage_path,status,created_at').eq('business_id', selectedId).order('created_at', { ascending: false }),
+            supabase.from('services').select('id', { count: 'exact', head: true }).eq('business_id', selectedId),
+            supabase.from('faqs').select('id', { count: 'exact', head: true }).eq('business_id', selectedId),
+            supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('business_id', selectedId),
+            supabase.from('leads').select('id', { count: 'exact', head: true }).eq('business_id', selectedId)
+          ]);
+          const failed = [businessResult, infoResult, docsResult, services, faqs, conversations, leads].find(result => result.error);
+          if (failed?.error) throw failed.error;
+          setBusiness(businessResult.data || emptyBusiness);
+          const info = Object.fromEntries((infoResult.data || []).map(row => [row.key, row.value]));
+          setKnowledge({ opening_hours: info.opening_hours || '', booking_policy: info.booking_policy || '', cancellation_policy: info.cancellation_policy || '', payment_methods: info.payment_methods || '', support_policy: info.support_policy || '' });
+          setCustomText(info.custom_knowledge || ''); setDocuments(docsResult.data || []);
+          setCounts({ services: services.count || 0, faqs: faqs.count || 0, conversations: conversations.count || 0, leads: leads.count || 0 });
+        }
+        /*
         const [services, faqs, conversations, leads] = await Promise.all([
           supabase.from('services').select('id', { count: 'exact', head: true }),
           supabase.from('faqs').select('id', { count: 'exact', head: true }),
@@ -76,7 +99,7 @@ function AdminDashboard({ session, onSignOut }) {
         setBusiness(emptyBusiness);
         setCounts({ services: services.count || 0, faqs: faqs.count || 0, conversations: conversations.count || 0, leads: leads.count || 0 });
         setKnowledge(emptyKnowledge); setCustomText(''); setDocuments([]);
-        return;
+        return; */
       }
       const { data: membership, error: membershipError } = await supabase.from('business_admins').select('business_id, role').eq('user_id', session.user.id).maybeSingle();
       if (membershipError) throw membershipError;
